@@ -222,6 +222,13 @@ function init() {
     cubeOneFolder.add(cube.material, 'metalness', 0, 1, 0.1)
     cubeOneFolder.add(cube.material, 'roughness', 0, 1, 0.1)
 
+    // adding checkbox add or remove the AxisHelper to the cube
+    cubeOneFolder.add({  addAxisHelper: () => {
+        const axes = new AxesHelper();
+        axes.renderOrder = 1;
+        cube.add(axes);
+      } }, 'addAxisHelper').name('add AxisHelper')
+
     cubeOneFolder
         .add(cube.rotation, 'x', -Math.PI * 2, Math.PI * 2, Math.PI / 4)
         .name('rotate x')
