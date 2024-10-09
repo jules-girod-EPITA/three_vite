@@ -9,6 +9,7 @@ import {
   Mesh,
   MeshLambertMaterial,
   MeshStandardMaterial,
+  Object3D,
   PCFSoftShadowMap,
   PerspectiveCamera,
   PlaneGeometry,
@@ -24,7 +25,24 @@ import * as animations from './helpers/animations'
 import { toggleFullScreen } from './helpers/fullscreen'
 import { resizeRendererToDisplaySize } from './helpers/responsiveness'
 import './style.css'
-import {loadFbx} from "./loader/model_loader";
+import { loadFbx } from "./loader/model_loader";
+import { initController } from "./controller/controller";
+
+class Player extends Object3D {
+  private onUpdate: () => void;
+
+  constructor(onUpdate: () => void) {
+    super();
+    this.onUpdate = onUpdate;
+  }
+
+  updateMatrixWorld(force?: boolean): void {
+
+    super.updateMatrixWorld(force);
+    this.onUpdate();
+  }
+}
+
 
 const CANVAS_ID = 'scene'
 
@@ -35,12 +53,13 @@ let loadingManager: LoadingManager
 let ambientLight: AmbientLight
 let pointLight: PointLight
 let cube: Mesh
-let camera: PerspectiveCamera
+export let player: Player
+export let camera: PerspectiveCamera
 let cameraControls: OrbitControls
 let dragControls: DragControls
 let axesHelper: AxesHelper
 let pointLightHelper: PointLightHelper
-let clock: Clock
+export let clock: Clock
 let stats: Stats
 let gui: GUI
 
@@ -107,6 +126,11 @@ function init() {
     cube.castShadow = true
     cube.position.y = 0.5
 
+    player = new Player(() => {
+      cameraControls.target = player.position.clone()
+    });
+    player.add(cube)
+
     const planeGeometry = new PlaneGeometry(3, 3)
     const planeMaterial = new MeshLambertMaterial({
       color: 'gray',
@@ -121,14 +145,20 @@ function init() {
     plane.receiveShadow = true
 
 
-    loadFbx('/assets/models/streets/', 'Street_4Way.fbx').then((testGlb) => {
-        scene.add(testGlb);
-    }).catch((error) => {
-        console.error("An error happened", error);
-    });
+    for (let i = -2; i < 3; i++) {
+      for (let j = -2; j < 3; j++) {
+        loadFbx('/assets/models/streets/', 'Street_4Way.fbx').then((testGlb) => {
+          const COEF_SCALE = 0.25;
+          testGlb.position.set(i * 2, 0, j * 2);
+          testGlb.scale.set(sideLength * COEF_SCALE, sideLength * COEF_SCALE, sideLength * COEF_SCALE);
+          scene.add(testGlb);
+        }).catch((error) => {
+          console.error("An error happened", error);
+        });
+      }
+    }
 
-
-    scene.add(cube)
+    scene.add(player);
     scene.add(plane)
   }
 
@@ -136,6 +166,7 @@ function init() {
   {
     camera = new PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, 100)
     camera.position.set(2, 2, 5)
+    player.add(camera)
   }
 
   // ===== 🕹️ CONTROLS =====
@@ -210,7 +241,12 @@ function init() {
   // ==== 🐞 DEBUG GUI ====
   {
     gui = new GUI({ title: '🐞 Debug GUI', width: 300 })
-
+    // open GUI by pressing 'g' key
+    window.addEventListener('keydown', (event) => {
+      if (event.key === 'g') {
+        gui.openAnimated(true);
+      }
+    })
     const cubeOneFolder = gui.addFolder('Cube one')
 
     cubeOneFolder.add(cube.position, 'x').min(-5).max(5).step(0.5).name('pos x')
@@ -222,12 +258,17 @@ function init() {
     cubeOneFolder.add(cube.material, 'metalness', 0, 1, 0.1)
     cubeOneFolder.add(cube.material, 'roughness', 0, 1, 0.1)
 
+    let axesHelperOnCube: AxesHelper = new AxesHelper();
     // adding checkbox add or remove the AxisHelper to the cube
-    cubeOneFolder.add({  addAxisHelper: () => {
-        const axes = new AxesHelper();
-        axes.renderOrder = 1;
-        cube.add(axes);
-      } }, 'addAxisHelper').name('add AxisHelper')
+    axesHelperOnCube.renderOrder = 1;
+    cube.add(axesHelperOnCube);
+
+
+    cubeOneFolder.add({
+      toggleAxisHelper: () => {
+        axesHelperOnCube.visible = !axesHelperOnCube.visible;
+      }
+    }, 'toggleAxisHelper').name('toggle AxisHelper')
 
     cubeOneFolder
         .add(cube.rotation, 'x', -Math.PI * 2, Math.PI * 2, Math.PI / 4)
@@ -274,6 +315,10 @@ function init() {
 
     gui.close()
   }
+
+
+  // ===== 🎮 EVENT LISTENERS =====
+  initController()
 }
 
 function animate() {
@@ -291,6 +336,7 @@ function animate() {
     camera.aspect = canvas.clientWidth / canvas.clientHeight
     camera.updateProjectionMatrix()
   }
+
 
   cameraControls.update()
 
