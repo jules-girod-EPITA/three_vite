@@ -14,8 +14,6 @@ import {
   Clock
 } from 'three';
 
-// If you prefer to import the whole library, with the THREE prefix, use the following line instead:
-// import * as THREE from 'three'
 
 // NOTE: three/addons alias is supported by Rollup: you can use it interchangeably with three/examples/jsm/  
 
@@ -40,6 +38,7 @@ import {
 import {
   GLTFLoader
 } from 'three/addons/loaders/GLTFLoader.js';
+import {loadGlb, loadObj} from "./loader/model_loader.js";
 
 // Example of hard link to official repo for data, if needed
 // const MODEL_PATH = 'https://raw.githubusercontent.com/mrdoob/js/r148/examples/models/gltf/LeePerrySmith/LeePerrySmith.glb';
@@ -67,28 +66,10 @@ const cube = new Mesh(geometry, material);
 
 scene.add(cube);
 
-function loadData() {
-  new GLTFLoader()
-    .setPath('assets/models/')
-    .load('test.glb', gltfReader);
-}
 
 
-function gltfReader(gltf) {
-  let testModel = null;
-
-  testModel = gltf.scene;
-
-  if (testModel != null) {
-    console.log("Model loaded:  " + testModel);
-    scene.add(gltf.scene);
-  } else {
-    console.log("Load FAILED.  ");
-  }
-}
-
-loadData();
-
+loadGlb(scene, '/assets/models/', 'test.glb');
+loadObj(scene, '/assets/models/', 'model.obj', 'model.mtl');
 
 camera.position.z = 3;
 
