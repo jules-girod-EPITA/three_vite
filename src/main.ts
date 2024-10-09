@@ -24,6 +24,7 @@ import * as animations from './helpers/animations'
 import { toggleFullScreen } from './helpers/fullscreen'
 import { resizeRendererToDisplaySize } from './helpers/responsiveness'
 import './style.css'
+import {loadFbx} from "./loader/model_loader";
 
 const CANVAS_ID = 'scene'
 
@@ -118,6 +119,14 @@ function init() {
     const plane = new Mesh(planeGeometry, planeMaterial)
     plane.rotateX(Math.PI / 2)
     plane.receiveShadow = true
+
+
+    loadFbx('/assets/models/streets/', 'Street_4Way.fbx').then((testGlb) => {
+        scene.add(testGlb);
+    }).catch((error) => {
+        console.error("An error happened", error);
+    });
+
 
     scene.add(cube)
     scene.add(plane)
