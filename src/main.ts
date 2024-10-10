@@ -18,15 +18,15 @@ import {
   Scene,
   WebGLRenderer,
 } from 'three'
-import { DragControls } from 'three/examples/jsm/controls/DragControls'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import {DragControls} from 'three/examples/jsm/controls/DragControls'
+import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls'
 import Stats from 'three/examples/jsm/libs/stats.module'
 import * as animations from './helpers/animations'
-import { toggleFullScreen } from './helpers/fullscreen'
-import { resizeRendererToDisplaySize } from './helpers/responsiveness'
+import {toggleFullScreen} from './helpers/fullscreen'
+import {resizeRendererToDisplaySize} from './helpers/responsiveness'
 import './style.css'
-import { loadFbx } from "./loader/model_loader";
-import { initController } from "./controller/controller";
+import {initController} from "./controller/controller";
+import {getRoadsLine} from "./terrain/road";
 
 class Player extends Object3D {
   private onUpdate: () => void;
@@ -62,6 +62,7 @@ let pointLightHelper: PointLightHelper
 export let clock: Clock
 let stats: Stats
 let gui: GUI
+export const sideLength = 1
 
 const animation = { enabled: true, play: true }
 
@@ -115,7 +116,6 @@ function init() {
 
   // ===== 📦 OBJECTS =====
   {
-    const sideLength = 1
     const cubeGeometry = new BoxGeometry(sideLength, sideLength, sideLength)
     const cubeMaterial = new MeshStandardMaterial({
       color: '#f69f1f',
@@ -144,28 +144,52 @@ function init() {
     plane.rotateX(Math.PI / 2)
     plane.receiveShadow = true
 
-
-    for (let i = -2; i < 3; i++) {
-      for (let j = -2; j < 3; j++) {
-        loadFbx('/assets/models/streets/', 'Street_4Way.fbx').then((testGlb) => {
-          const COEF_SCALE = 0.25;
-          testGlb.position.set(i * 2, 0, j * 2);
-          testGlb.scale.set(sideLength * COEF_SCALE, sideLength * COEF_SCALE, sideLength * COEF_SCALE);
-          scene.add(testGlb);
-        }).catch((error) => {
-          console.error("An error happened", error);
-        });
-      }
-    }
-
     scene.add(player);
     scene.add(plane)
+  }
+
+
+  // === 📦 FBX OBJECT ===
+  {
+    for(let i = 0; i < 5; i++) {
+      getRoadsLine().then((road) => {
+        road.position.set(0, 0, i * 2);
+        scene.add(road);
+      });
+    }
+  }
+
+
+  // ==== 🌲 DECORATION ====
+  {
+    // ==== 🌌 SKYBOX ====
+    const skyboxGeometry = new BoxGeometry(100, 100, 100)
+    const skyboxMaterial = new MeshStandardMaterial({
+      color: 'skyblue',
+      side: 1,
+    })
+    const skybox = new Mesh(skyboxGeometry, skyboxMaterial);
+    skybox.material.emissive.set('skyblue')
+    scene.add(skybox)
+
+
+    // ==== 🌳 GROUND ====
+    const groundGeometry = new PlaneGeometry(20, 20)
+    const groundMaterial = new MeshStandardMaterial({
+      color: 'green',
+      side: 2,
+    })
+    const ground = new Mesh(groundGeometry, groundMaterial)
+    ground.position.y = -1
+    ground.receiveShadow = true
+    ground.rotateX(-Math.PI / 2)
+    scene.add(ground)
   }
 
   // ===== 🎥 CAMERA =====
   {
     camera = new PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, 100)
-    camera.position.set(2, 2, 5)
+    camera.position.set(-1, 3, -5)
     player.add(camera)
   }
 
