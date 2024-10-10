@@ -14,6 +14,7 @@ export function getRoadsLine(): Promise<Object3D> {
             roughness: 0.6,
         })
         const car = new Mesh(cubeGeometry, cubeMaterial)
+        car.name = "car"
         car.castShadow = true
         car.position.x = -1.25
 

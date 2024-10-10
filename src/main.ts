@@ -27,6 +27,7 @@ import {resizeRendererToDisplaySize} from './helpers/responsiveness'
 import './style.css'
 import {initController} from "./controller/controller";
 import {getRoadsLine} from "./terrain/road";
+import { checkCollisions } from "./collision/collision";
 
 class Player extends Object3D {
   private onUpdate: () => void;
@@ -48,7 +49,7 @@ const CANVAS_ID = 'scene'
 
 let canvas: HTMLElement
 let renderer: WebGLRenderer
-let scene: Scene
+export let scene: Scene
 let loadingManager: LoadingManager
 let ambientLight: AmbientLight
 let pointLight: PointLight
@@ -349,6 +350,18 @@ function animate() {
   requestAnimationFrame(animate)
 
   stats.update()
+
+  // On recupere les voitures
+  let cars = [];
+
+  scene.traverse((child) => {
+    if (child instanceof Mesh && child.name === "car") {
+        cars.push(child);
+    }
+  });
+
+  // On check les collisions avec le joueur
+  checkCollisions(cars, player);
 
   if (animation.enabled && animation.play) {
     animations.rotate(cube, clock, Math.PI / 3)
