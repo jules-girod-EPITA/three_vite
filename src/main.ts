@@ -352,7 +352,7 @@ function animate() {
   stats.update()
 
   // On recupere les voitures
-  let cars = [];
+  let cars :Object3D[] = [];
 
   scene.traverse((child) => {
     if (child instanceof Mesh && child.name === "car") {
