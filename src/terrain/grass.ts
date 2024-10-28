@@ -42,7 +42,12 @@ async function loadProp(i: number, propType: PropType) {
         return await loadFbx("assets/models/props/", `${propPath}_${index}.fbx`).then((model) => {
             model.name = propName;
             model.scale.set(0.5, 0.5, 0.5)
-            model.position.set(i * 2, 0, 0);
+            if(propType !== PropType.DeadTree && propType !== PropType.Tree && propType !== PropType.Rock) {
+                model.position.set(i * 2 + Math.random(), 0, Math.random());
+            }
+            else {
+                model.position.set(i * 2, 0, 0);
+            }
             return model;
         });
     } catch (error) {
@@ -54,7 +59,6 @@ export function getGrassLine(): Promise<Object3D> {
     return new Promise<Object3D>(async (resolve) => {
         const road: Object3D = new Object3D();
         const randomArea = Array.from({ length: playableArea }, () => Math.floor(Math.random() * 100));
-        const COEF_SCALE = 0.25;
 
         // TODO : make sure there is always a path
         for (let i = -Math.floor(playableArea / 2); i < Math.ceil(playableArea / 2); i++) {

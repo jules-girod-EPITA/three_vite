@@ -1,5 +1,5 @@
-import { Box3, Object3D, Vector3 } from "three";
-import { cube } from "../main";
+import { Box3, Box3Helper, Object3D, Vector3 } from "three";
+import { cube, scene } from "../main";
 import { gsap } from "gsap";
 
 
@@ -71,7 +71,8 @@ export function checkCollisionsTree(trees: Object3D[], player: Object3D) {
             tree.userData.hasCollided = false;
         }
 
-        if (distance < 1 && !tree.userData.hasCollided) {
+        if (distance < 0.5 && !tree.userData.hasCollided) {
+            tree.userData.hasCollided = true;
             gsap.to(cube.rotation, {
                 duration: 1,
                 x: Math.PI * 2 * 8,
@@ -109,6 +110,50 @@ export function checkCollisionsTree(trees: Object3D[], player: Object3D) {
                     })
                 }
             });
+        }
+    });
+}
+
+export function checkCollisionsRocks(rocks: Object3D[], player: Object3D) {
+    rocks.forEach((rock) => {
+        // get tree position in world space
+        const rockPosition = rock.getWorldPosition(new Vector3());
+        const playerPosition = player.getWorldPosition(new Vector3());
+        const distance = rockPosition.distanceTo(playerPosition);
+
+
+
+        if (!rock.userData.hasCollided) {
+            rock.userData.hasCollided = false;
+        }
+
+
+        if (distance < 1 && !rock.userData.hasCollided) {
+            rock.userData.hasCollided = true;
+
+            let front = rockPosition.z === playerPosition.z ? 0 : rockPosition.z > playerPosition.z ? 1 : -1;
+
+            let rotationX = front === 1 ? Math.PI / 2 : -Math.PI / 2;
+            gsap.to(cube.rotation, {
+                duration: 0.25,
+                x: rotationX,
+                onComplete: () => {
+                    gsap.to(cube.rotation, {
+                        duration: 2,
+                        x: 0,
+                    });
+                }
+            });
+            gsap.to(player.position, {
+                duration: 0.25,
+                y: 0.01,
+                onComplete: () => {
+                    gsap.to(player.position, {
+                        duration: 2,
+                        y: 0,
+                    });
+                }
+            })
         }
     });
 }

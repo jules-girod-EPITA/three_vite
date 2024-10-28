@@ -22,7 +22,7 @@ import { toggleFullScreen } from './helpers/fullscreen'
 import { resizeRendererToDisplaySize } from './helpers/responsiveness'
 import './style.css'
 import { initController } from "./controller/controller";
-import { checkCollisionsCars, checkCollisionsTree } from "./collision/collision";
+import { checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree } from "./collision/collision";
 import { loadFbx } from "./loader/model_loader";
 import { getRoadsLine } from "./terrain/road";
 import { getGrassLine } from "./terrain/grass";
@@ -193,7 +193,7 @@ async function init() {
 
     // ===== 🎥 CAMERA =====
     {
-        camera = new PerspectiveCamera(60, canvas.clientWidth / canvas.clientHeight, 2.4, 20)
+        camera = new PerspectiveCamera(60, canvas.clientWidth / canvas.clientHeight, 2.4, 30)
         camera.position.set(-1, 6, -5.5)
         player.add(camera)
     }
@@ -357,7 +357,8 @@ function animate() {
 
     // On recupere les voitures
     let cars: Object3D[] = [];
-    let tree: Object3D[] = [];
+    let trees: Object3D[] = [];
+    let rocks: Object3D[] = [];
 
     scene.traverse((child) => {
 
@@ -365,13 +366,17 @@ function animate() {
             cars.push(child);
         }
         if (child instanceof Group && child.name === "tree" || child.name === "dead_tree") {
-            tree.push(child);
+            trees.push(child);
+        }
+        if (child instanceof Group && child.name === "rock") {
+            rocks.push(child);
         }
     });
 
     // On check les collisions avec le joueur
     checkCollisionsCars(cars, player);
-    checkCollisionsTree(tree, player);
+    checkCollisionsTree(trees, player);
+    checkCollisionsRocks(rocks, player);
 
     if (resizeRendererToDisplaySize(renderer)) {
         const canvas = renderer.domElement
