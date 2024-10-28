@@ -1,10 +1,14 @@
-import {BoxGeometry, Mesh, MeshStandardMaterial, Object3D, Vector3} from "three";
-import {loadFbx} from "../loader/model_loader";
-import {player, sideLength} from "../main";
-import {gsap} from "gsap";
+import { BoxGeometry, Mesh, MeshStandardMaterial, Object3D, Vector3 } from "three";
+import { loadFbx, loadGlb } from "../loader/model_loader";
+import { player, sideLength } from "../main";
+import { gsap } from "gsap";
 
+
+
+const cars : {model: string, speed: number}[] = [{model: "model1.glb", speed: 5 }, {model: "model2.glb", speed: 3 }, {model: "model3.glb", speed: 3 }, {model: "model4.glb", speed: 4 }, {model: "model5.glb", speed: 1 }];
 
 export function getRoadsLine(): Promise<Object3D> {
+    const random = Math.floor(Math.random() * cars.length);
 
     async function generateCar(carGenerator: Object3D) {
 
@@ -18,22 +22,23 @@ export function getRoadsLine(): Promise<Object3D> {
 
         // Return immediately if the distance is greater than 20 units
         if (distance > 40) {
-            console.log(`Distance: ${distance} units`);
             setTimeout(() => {
                 generateCar(carGenerator);
             }, 2000);
             return;
         }
 
-        const car = await loadFbx("assets/models/cars/", "model1.fbx");
-        car.scale.set(1, 1, 1)
-        car.rotation.set(0, Math.PI /2, Math.PI)
+
+        let car = await loadGlb("assets/models/cars/", cars[random].model);
+        car.scale.set(0.5, 0.5, 0.5)
+        car.rotation.set(0, -Math.PI / 2, 0)
         car.name = "car"
         car.castShadow = true
-        car.position.x = -1.25
+        car.position.set(-1.25, 0, 0)
+        car.userData.speed = cars[random].speed;
 
         const duration = 8;
-        const speed = Math.random() * 5 + 1;
+        const speed = cars[random].speed;
         gsap.to(car.position, {
             duration: duration / speed,
             "ease": "none",
@@ -76,7 +81,7 @@ export function getRoadsLine(): Promise<Object3D> {
         })
         const carGenerator = new Mesh(cubeGeometry, cubeMaterial)
         carGenerator.castShadow = true
-        carGenerator.position.y = 0.5
+        carGenerator.position.y = 0
         carGenerator.position.x = Math.floor(roadBlock / 2) * 2
         road.add(carGenerator)
 

@@ -4,7 +4,7 @@ import {
   AxesHelper,
   BoxGeometry,
   Clock,
-  GridHelper,
+  GridHelper, Group,
   LoadingManager,
   Mesh,
   MeshLambertMaterial,
@@ -353,7 +353,8 @@ function animate() {
   let cars :Object3D[] = [];
 
   scene.traverse((child) => {
-    if (child instanceof Mesh && child.name === "car") {
+
+    if (child instanceof Group && child.name === "car") {
         cars.push(child);
     }
   });

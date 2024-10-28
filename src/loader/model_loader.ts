@@ -1,20 +1,31 @@
-import {GLTF, GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader.js";
-import {OBJLoader} from "three/examples/jsm/loaders/OBJLoader.js";
-import {MTLLoader} from "three/examples/jsm/loaders/MTLLoader.js";
-import {Group} from "three";
-import {FBXLoader} from "three/examples/jsm/loaders/FBXLoader";
+import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
+import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
+import { Group } from "three";
+import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
+const objCache: Record<string, Group> = {};
 
 
 export function loadGlb(path: string, filename: string): Promise<Group> {
     return new Promise((resolve, reject) => {
+
+        const cacheKey = `${path}${filename}`;
+        if (objCache[cacheKey]) {
+            console.log("Model retrieved from cache: ", objCache[cacheKey]);
+            resolve(objCache[cacheKey].clone());
+            return;
+        }
+
         new GLTFLoader()
             .setPath(path)
             .load(
                 filename,
                 (gltf: GLTF) => {
-                    const testModel = gltf.scene;
+                    const testModel = gltf.scene as Group;
                     if (testModel != null) {
                         console.log("Model loaded: ", testModel);
+                        // Cache the loaded model
+                        objCache[cacheKey] = testModel;
                         resolve(testModel);
                     } else {
                         console.log("Load FAILED.");
@@ -75,7 +86,6 @@ export function loadObj(path: string, filenameObj: string, filenameMtl: string):
     });
 }
 
-const objCache: Record<string, Group> = {};
 
 export function loadFbx(path: string, filename: string): Promise<Group> {
     return new Promise((resolve, reject) => {

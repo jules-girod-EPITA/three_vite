@@ -1,7 +1,7 @@
-import { Object3D, Box3, Vector3 } from "three";
-import { scene } from "../main";
+import { Box3, Object3D, Vector3 } from "three";
+import { cube } from "../main";
+import { gsap } from "gsap";
 
-const respawnPosition = new Vector3(0, 0, 0); // Position de respawn du joueur
 
 export function checkCollisions(cars: Object3D[], player: Object3D) {
     const playerBox = new Box3().setFromObject(player);
@@ -9,9 +9,50 @@ export function checkCollisions(cars: Object3D[], player: Object3D) {
     cars.forEach((car) => {
         const carBox = new Box3().setFromObject(car);
 
-        if (playerBox.intersectsBox(carBox)) {
+        if (!car.userData.hasCollided) {
+            car.userData.hasCollided = false;
+        }
+
+
+        if (playerBox.intersectsBox(carBox) && !car.userData.hasCollided) {
+            car.userData.hasCollided = true;
             // Collision détectée, repositionner le joueur
-            scene.remove(player);
+            // scene.remove(player);
+            gsap.to(cube.rotation, {
+                duration: 1,
+                x: Math.PI * 2 * 8,
+                y: Math.PI * 2 * 8,
+                z: Math.PI * 2 * 8
+            });
+
+            const directionToBePushed = new Vector3();
+            // Calculate the delta Z between the carBox and the playerBox
+            const left = carBox.getCenter(new Vector3()).x > playerBox.getCenter(new Vector3()).x;
+
+            // Collision detected, reposition the player
+            gsap.to(cube.rotation, {
+                duration: 1,
+                x: Math.random() < 0.5 ? Math.PI / 2 : 3 * Math.PI / 2,
+                y: 0,
+                z: Math.random() * Math.PI * 2 * 8
+            });
+
+            // Push the player in the opposite direction
+            const originalPosition = new Vector3().copy(player.position);
+            gsap.to(player.position, {
+                duration: 0.5,
+                x: originalPosition.x + (left ? -car.userData.speed : car.userData.speed),
+                y: originalPosition.y + 1,
+                ease: "none",
+                onComplete: () => {
+                    gsap.to(player.position, {
+                        duration: 0.5,
+                        x: originalPosition.x + (left ? -car.userData.speed *1.25 : car.userData.speed*1.25),
+                        y: 0,
+                        ease: "none",
+                    })
+                }
+            });
         }
     });
 }
