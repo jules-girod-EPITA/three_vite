@@ -45,8 +45,7 @@ async function loadProp(i: number, propType: PropType) {
             model.position.set(i * 2, 0, 0);
             return model;
         });
-    }
-    catch (error) {
+    } catch (error) {
         console.error("An error happened while loading model:", error);
     }
 }

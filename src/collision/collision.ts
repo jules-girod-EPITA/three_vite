@@ -1,5 +1,5 @@
-import { Box3, Box3Helper, Object3D, Vector3 } from "three";
-import { cube, scene } from "../main";
+import { Box3, Object3D, Vector3 } from "three";
+import { cube } from "../main";
 import { gsap } from "gsap";
 
 
@@ -19,8 +19,6 @@ export function checkCollisionsCars(cars: Object3D[], player: Object3D) {
         // setTimeout(() => {
         //     scene.remove(helper);
         // }, 10);
-
-
 
 
         if (playerBox.intersectsBox(carBox) && !car.userData.hasCollided) {
@@ -51,7 +49,7 @@ export function checkCollisionsCars(cars: Object3D[], player: Object3D) {
                 onComplete: () => {
                     gsap.to(player.position, {
                         duration: 0.5,
-                        x: originalPosition.x + (left ? -car.userData.speed *1.25 : car.userData.speed*1.25),
+                        x: originalPosition.x + (left ? -car.userData.speed * 1.25 : car.userData.speed * 1.25),
                         y: 0,
                         ease: "none",
                     })

@@ -1,4 +1,4 @@
-import { BoxGeometry, DirectionalLight, Mesh, MeshStandardMaterial, Object3D, PointLight, Vector3 } from "three";
+import { BoxGeometry, Mesh, MeshStandardMaterial, Object3D, Vector3 } from "three";
 import { loadFbx, loadGlb } from "../loader/model_loader";
 import { playableArea, player, sideLength } from "../main";
 import { gsap } from "gsap";
