@@ -21,13 +21,13 @@ import {
 import {DragControls} from 'three/examples/jsm/controls/DragControls'
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls'
 import Stats from 'three/examples/jsm/libs/stats.module'
-import * as animations from './helpers/animations'
 import {toggleFullScreen} from './helpers/fullscreen'
 import {resizeRendererToDisplaySize} from './helpers/responsiveness'
 import './style.css'
 import {initController} from "./controller/controller";
 import {getRoadsLine} from "./terrain/road";
-import { checkCollisions } from "./collision/collision";
+import {checkCollisions} from "./collision/collision";
+import {loadFbx} from "./loader/model_loader";
 
 class Player extends Object3D {
   private onUpdate: () => void;
@@ -53,7 +53,7 @@ export let scene: Scene
 let loadingManager: LoadingManager
 let ambientLight: AmbientLight
 let pointLight: PointLight
-let cube: Mesh
+export let cube: Object3D
 export let player: Player
 export let camera: PerspectiveCamera
 let cameraControls: OrbitControls
@@ -67,10 +67,10 @@ export const sideLength = 1
 
 const animation = { enabled: true, play: true }
 
-init()
+await init()
 animate()
 
-function init() {
+async function init() {
   // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
   {
     canvas = document.querySelector(`canvas#${CANVAS_ID}`)!
@@ -117,15 +117,12 @@ function init() {
 
   // ===== 📦 OBJECTS =====
   {
-    const cubeGeometry = new BoxGeometry(sideLength, sideLength, sideLength)
-    const cubeMaterial = new MeshStandardMaterial({
-      color: '#f69f1f',
-      metalness: 0.5,
-      roughness: 0.7,
-    })
-    cube = new Mesh(cubeGeometry, cubeMaterial)
-    cube.castShadow = true
-    cube.position.y = 0.5
+    try {
+      cube = await loadFbx("assets/models/", "Steve.fbx");
+      cube.scale.set(0.0035, 0.0035, 0.0035);
+    } catch (error) {
+      console.error("An error happened while loading model:", error);
+    }
 
     player = new Player(() => {
       cameraControls.target = player.position.clone()
@@ -152,11 +149,17 @@ function init() {
 
   // === 📦 FBX OBJECT ===
   {
-    for(let i = 0; i < 5; i++) {
-      getRoadsLine().then((road) => {
-        road.position.set(0, 0, i * 2);
-        scene.add(road);
-      });
+    const randomArray = Array.from({length: 300}, () => Math.floor(Math.random() * 100));
+    console.log(randomArray);
+
+    for (let i = 1; i < randomArray.length; i++) {
+      if (randomArray[i] <= 50) {
+        getRoadsLine().then((road) => {
+          road.position.set(0, 0, i * 2);
+          scene.add(road);
+        });
+      }
+
     }
   }
 
@@ -164,7 +167,7 @@ function init() {
   // ==== 🌲 DECORATION ====
   {
     // ==== 🌌 SKYBOX ====
-    const skyboxGeometry = new BoxGeometry(100, 100, 100)
+    const skyboxGeometry = new BoxGeometry(100, 100, 325 * 4)
     const skyboxMaterial = new MeshStandardMaterial({
       color: 'skyblue',
       side: 1,
@@ -189,7 +192,7 @@ function init() {
 
   // ===== 🎥 CAMERA =====
   {
-    camera = new PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, 100)
+    camera = new PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, 300)
     camera.position.set(-1, 3, -5)
     player.add(camera)
   }
@@ -278,11 +281,6 @@ function init() {
     cubeOneFolder.add(cube.position, 'y').min(-5).max(5).step(0.5).name('pos y')
     cubeOneFolder.add(cube.position, 'z').min(-5).max(5).step(0.5).name('pos z')
 
-    cubeOneFolder.add(cube.material, 'wireframe')
-    cubeOneFolder.addColor(cube.material, 'color')
-    cubeOneFolder.add(cube.material, 'metalness', 0, 1, 0.1)
-    cubeOneFolder.add(cube.material, 'roughness', 0, 1, 0.1)
-
     let axesHelperOnCube: AxesHelper = new AxesHelper();
     // adding checkbox add or remove the AxisHelper to the cube
     axesHelperOnCube.renderOrder = 1;
@@ -362,11 +360,6 @@ function animate() {
 
   // On check les collisions avec le joueur
   checkCollisions(cars, player);
-
-  if (animation.enabled && animation.play) {
-    animations.rotate(cube, clock, Math.PI / 3)
-    animations.bounce(cube, clock, 1, 0.5, 0.5)
-  }
 
   if (resizeRendererToDisplaySize(renderer)) {
     const canvas = renderer.domElement

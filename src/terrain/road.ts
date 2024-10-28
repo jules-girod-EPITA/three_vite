@@ -1,19 +1,33 @@
-import {BoxGeometry, Mesh, MeshStandardMaterial, Object3D} from "three";
+import {BoxGeometry, Mesh, MeshStandardMaterial, Object3D, Vector3} from "three";
 import {loadFbx} from "../loader/model_loader";
-import {sideLength} from "../main";
+import {player, sideLength} from "../main";
 import {gsap} from "gsap";
 
 
 export function getRoadsLine(): Promise<Object3D> {
 
-    function generateCar(carGenerator: Object3D) {
-        const cubeGeometry = new BoxGeometry(sideLength, sideLength, sideLength)
-        const cubeMaterial = new MeshStandardMaterial({
-            color: 'gray',
-            metalness: 0.8,
-            roughness: 0.6,
-        })
-        const car = new Mesh(cubeGeometry, cubeMaterial)
+    async function generateCar(carGenerator: Object3D) {
+
+        const playerWorldPosition = new Vector3();
+        const carGeneratorWorldPosition = new Vector3();
+
+        player.getWorldPosition(playerWorldPosition);
+        carGenerator.getWorldPosition(carGeneratorWorldPosition);
+
+        const distance = playerWorldPosition.distanceTo(carGeneratorWorldPosition);
+
+        // Return immediately if the distance is greater than 20 units
+        if (distance > 40) {
+            console.log(`Distance: ${distance} units`);
+            setTimeout(() => {
+                generateCar(carGenerator);
+            }, 2000);
+            return;
+        }
+
+        const car = await loadFbx("assets/models/cars/", "model1.fbx");
+        car.scale.set(1, 1, 1)
+        car.rotation.set(0, Math.PI /2, Math.PI)
         car.name = "car"
         car.castShadow = true
         car.position.x = -1.25
@@ -36,20 +50,21 @@ export function getRoadsLine(): Promise<Object3D> {
     }
 
 
-    return new Promise<Object3D>((resolve) => {
+    return new Promise<Object3D>(async (resolve) => {
         const road: Object3D = new Object3D();
-        const roadBlock = 11;
+        const roadBlock = 9;
         const COEF_SCALE = 0.25;
 
         for (let i = -Math.floor(roadBlock / 2); i < Math.ceil(roadBlock / 2); i++) {
-            loadFbx("assets/models/streets/", "Street_Straight.fbx").then((model) => {
+            try {
+                const model = await loadFbx("assets/models/streets/", "Street_Straight.fbx");
                 model.position.set(i * 2, 0, 0);
                 model.rotation.set(0, Math.PI / 2, 0);
                 model.scale.set(sideLength * COEF_SCALE, sideLength * COEF_SCALE, sideLength * COEF_SCALE);
                 road.add(model);
-            }).catch((error) => {
-                console.error("An error happened", error);
-            });
+            } catch (error) {
+                console.error("An error happened while loading model:", error);
+            }
         }
 
         // generate a cube a Math.floor(roadBlock / 2) * 2

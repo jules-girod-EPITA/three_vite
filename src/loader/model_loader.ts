@@ -4,6 +4,7 @@ import {MTLLoader} from "three/examples/jsm/loaders/MTLLoader.js";
 import {Group} from "three";
 import {FBXLoader} from "three/examples/jsm/loaders/FBXLoader";
 
+
 export function loadGlb(path: string, filename: string): Promise<Group> {
     return new Promise((resolve, reject) => {
         new GLTFLoader()
@@ -74,16 +75,28 @@ export function loadObj(path: string, filenameObj: string, filenameMtl: string):
     });
 }
 
+const objCache: Record<string, Group> = {};
+
 export function loadFbx(path: string, filename: string): Promise<Group> {
     return new Promise((resolve, reject) => {
+        const cacheKey = `${path}${filename}`;
+
+        if (objCache[cacheKey]) {
+            console.log("Model retrieved from cache: ", objCache[cacheKey]);
+            resolve(objCache[cacheKey].clone());
+            return;
+        }
+
         new FBXLoader()
             .setPath(path)
             .load(
                 filename,
                 (object) => {
-                    const testModel = object;
+                    const testModel = object as Group;
                     if (testModel != null) {
                         console.log("Model loaded: ", testModel);
+                        // Cache the loaded model
+                        objCache[cacheKey] = testModel;
                         resolve(testModel);
                     } else {
                         console.log("Load FAILED.");
@@ -100,5 +113,4 @@ export function loadFbx(path: string, filename: string): Promise<Group> {
             );
     });
 }
-
 
