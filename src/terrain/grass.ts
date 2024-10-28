@@ -48,6 +48,7 @@ async function loadProp(i: number, propType: PropType) {
             else {
                 model.position.set(i * 2, 0, 0);
             }
+            model.rotation.set(0, (Math.random() < 0.5 ? 1 : 0) * Math.PI, 0);
             return model;
         });
     } catch (error) {
