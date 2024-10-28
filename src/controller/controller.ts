@@ -11,7 +11,7 @@ export function initController() {
     if (player.position.y != 0)
       return;
 
-    const jumpHeight = 2; // Hauteur du saut
+    const jumpHeight = 1.0; // Hauteur du saut
     const moveDistance = 2; // Distance à parcourir pendant le saut
     const duration = 0.15; // Durée totale de l'animation de saut
     const rotationDuration = 0.5; // Durée de l'animation de rotation

@@ -4,30 +4,28 @@ import {
   AxesHelper,
   BoxGeometry,
   Clock,
-  GridHelper, Group,
+  Group,
   LoadingManager,
   Mesh,
-  MeshLambertMaterial,
   MeshStandardMaterial,
   Object3D,
   PCFSoftShadowMap,
   PerspectiveCamera,
   PlaneGeometry,
-  PointLight,
-  PointLightHelper,
   Scene,
   WebGLRenderer,
 } from 'three'
-import {DragControls} from 'three/examples/jsm/controls/DragControls'
-import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls'
+import { DragControls } from 'three/examples/jsm/controls/DragControls'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import Stats from 'three/examples/jsm/libs/stats.module'
-import {toggleFullScreen} from './helpers/fullscreen'
-import {resizeRendererToDisplaySize} from './helpers/responsiveness'
+import { toggleFullScreen } from './helpers/fullscreen'
+import { resizeRendererToDisplaySize } from './helpers/responsiveness'
 import './style.css'
-import {initController} from "./controller/controller";
-import {getRoadsLine} from "./terrain/road";
-import {checkCollisions} from "./collision/collision";
-import {loadFbx} from "./loader/model_loader";
+import { initController } from "./controller/controller";
+import { checkCollisionsCars, checkCollisionsTree } from "./collision/collision";
+import { loadFbx } from "./loader/model_loader";
+import { getRoadsLine } from "./terrain/road";
+import { getGrassLine } from "./terrain/grass";
 
 class Player extends Object3D {
   private onUpdate: () => void;
@@ -52,17 +50,17 @@ let renderer: WebGLRenderer
 export let scene: Scene
 let loadingManager: LoadingManager
 let ambientLight: AmbientLight
-let pointLight: PointLight
 export let cube: Object3D
 export let player: Player
 export let camera: PerspectiveCamera
 let cameraControls: OrbitControls
 let dragControls: DragControls
 let axesHelper: AxesHelper
-let pointLightHelper: PointLightHelper
 export let clock: Clock
 let stats: Stats
 let gui: GUI
+export const playableArea = 9*2;
+
 export const sideLength = 1
 
 const animation = { enabled: true, play: true }
@@ -102,17 +100,8 @@ async function init() {
 
   // ===== 💡 LIGHTS =====
   {
-    ambientLight = new AmbientLight('white', 0.4)
-    pointLight = new PointLight('white', 20, 100)
-    pointLight.position.set(-2, 2, 2)
-    pointLight.castShadow = true
-    pointLight.shadow.radius = 4
-    pointLight.shadow.camera.near = 0.5
-    pointLight.shadow.camera.far = 4000
-    pointLight.shadow.mapSize.width = 2048
-    pointLight.shadow.mapSize.height = 2048
+    ambientLight = new AmbientLight('white', 3);
     scene.add(ambientLight)
-    scene.add(pointLight)
   }
 
   // ===== 📦 OBJECTS =====
@@ -129,36 +118,31 @@ async function init() {
     });
     player.add(cube)
 
-    const planeGeometry = new PlaneGeometry(3, 3)
-    const planeMaterial = new MeshLambertMaterial({
-      color: 'gray',
-      emissive: 'teal',
-      emissiveIntensity: 0.2,
-      side: 2,
-      transparent: true,
-      opacity: 0.4,
-    })
-    // const plane = new Mesh(planeGeometry, planeMaterial)
-    // plane.rotateX(Math.PI / 2)
-    // plane.receiveShadow = true
-
     scene.add(player);
-    // scene.add(plane)
   }
 
 
   // === 📦 FBX OBJECT ===
   {
     const randomArray = Array.from({length: 300}, () => Math.floor(Math.random() * 100));
-    console.log(randomArray);
+
 
     for (let i = 1; i < randomArray.length; i++) {
+
+      // 0 to 50 = road
+      // 51 to 100 = grass
       if (randomArray[i] <= 50) {
-        getRoadsLine().then((road) => {
+        await getRoadsLine().then((road) => {
           road.position.set(0, 0, i * 2);
           scene.add(road);
         });
+      } else {
+        await getGrassLine().then((grass) => {
+          grass.position.set(0, 0, i * 2);
+          scene.add(grass);
+        });
       }
+
 
     }
   }
@@ -178,7 +162,7 @@ async function init() {
 
 
     // ==== 🌳 GROUND ====
-    const groundGeometry = new PlaneGeometry(20, 300)
+    const groundGeometry = new PlaneGeometry(20, 625)
     const groundMaterial = new MeshStandardMaterial({
       color: 'green',
       side: 2,
@@ -188,13 +172,29 @@ async function init() {
     ground.receiveShadow = true
     ground.rotateX(-Math.PI / 2)
     ground.position.z = groundGeometry.parameters.height / 2 - 10
+
+    for (let i = 0; i < 2; i++) {
+      const groundMaterialOutside = new MeshStandardMaterial({
+        color: 'darkgreen',
+        side: 2,
+      })
+      const groundOutside = new Mesh(groundGeometry, groundMaterialOutside)
+      groundOutside.position.y = -0.01
+      groundOutside.receiveShadow = true
+      groundOutside.rotateX(-Math.PI / 2)
+      groundOutside.position.z = groundGeometry.parameters.height / 2 - 10
+      groundOutside.position.x = i === 0 ? -20 : 20
+      scene.add(groundOutside)
+    }
+
+
     scene.add(ground)
   }
 
   // ===== 🎥 CAMERA =====
   {
-    camera = new PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, 300)
-    camera.position.set(-1, 3, -5)
+    camera = new PerspectiveCamera(60, canvas.clientWidth / canvas.clientHeight, 2.4, 20)
+    camera.position.set(-1, 6, -5.5)
     player.add(camera)
   }
 
@@ -251,10 +251,6 @@ async function init() {
     axesHelper.visible = false
     scene.add(axesHelper)
 
-    pointLightHelper = new PointLightHelper(pointLight, undefined, 'orange')
-    pointLightHelper.visible = false
-    scene.add(pointLightHelper)
-
     // const gridHelper = new GridHelper(20, 20, 'teal', 'darkgray')
     // gridHelper.position.y = -0.01
     // scene.add(gridHelper)
@@ -310,15 +306,24 @@ async function init() {
     controlsFolder.add(dragControls, 'enabled').name('drag controls')
 
     const lightsFolder = gui.addFolder('Lights')
-    lightsFolder.add(pointLight, 'visible').name('point light')
     lightsFolder.add(ambientLight, 'visible').name('ambient light')
+    lightsFolder.add(ambientLight, 'intensity', 0, 10, 0.1).name('ambient light intensity')
 
     const helpersFolder = gui.addFolder('Helpers')
     helpersFolder.add(axesHelper, 'visible').name('axes')
-    helpersFolder.add(pointLightHelper, 'visible').name('pointLight')
 
     const cameraFolder = gui.addFolder('Camera')
     cameraFolder.add(cameraControls, 'autoRotate')
+    // camera positoin
+    cameraFolder.add(camera.position, 'x').min(-10).max(10).step(0.5).name('pos x')
+    cameraFolder.add(camera.position, 'y').min(-10).max(10).step(0.5).name('pos y')
+    cameraFolder.add(camera.position, 'z').min(-10).max(10).step(0.5).name('pos z')
+    // camera fov
+    cameraFolder.add(camera, 'fov', 1, 180).name('fov').onChange(() => camera.updateProjectionMatrix())
+
+    // camera near and far
+    cameraFolder.add(camera, 'near', 1, 100).name('near').onChange(() => camera.updateProjectionMatrix())
+    cameraFolder.add(camera, 'far', 1, 1000).name('far').onChange(() => camera.updateProjectionMatrix())
 
     // persist GUI state in local storage on changes
     gui.onFinishChange(() => {
@@ -359,14 +364,14 @@ function animate() {
     if (child instanceof Group && child.name === "car") {
         cars.push(child);
     }
-    if (child instanceof Group && child.name === "tree") {
+    if (child instanceof Group && child.name === "tree" || child.name === "dead_tree") {
       tree.push(child);
     }
   });
 
   // On check les collisions avec le joueur
-  checkCollisions(cars, player);
-  checkCollisions(tree, player);
+  checkCollisionsCars(cars, player);
+  checkCollisionsTree(tree, player);
 
   if (resizeRendererToDisplaySize(renderer)) {
     const canvas = renderer.domElement

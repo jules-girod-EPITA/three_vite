@@ -1,11 +1,15 @@
-import { BoxGeometry, Mesh, MeshStandardMaterial, Object3D, Vector3 } from "three";
+import { BoxGeometry, DirectionalLight, Mesh, MeshStandardMaterial, Object3D, PointLight, Vector3 } from "three";
 import { loadFbx, loadGlb } from "../loader/model_loader";
-import { player, sideLength } from "../main";
+import { playableArea, player, sideLength } from "../main";
 import { gsap } from "gsap";
 
 
-
-const cars : {model: string, speed: number}[] = [{model: "model1.glb", speed: 5 }, {model: "model2.glb", speed: 3 }, {model: "model3.glb", speed: 3 }, {model: "model4.glb", speed: 4 }, {model: "model5.glb", speed: 1 }];
+const cars: { model: string, speed: number }[] = [
+    { model: "model1.glb", speed: 5 },
+    { model: "model2.glb", speed: 3 },
+    { model: "model3.glb", speed: 3 },
+    { model: "model4.glb", speed: 4 },
+    { model: "model5.glb", speed: 1 }];
 
 export function getRoadsLine(): Promise<Object3D> {
     const random = Math.floor(Math.random() * cars.length);
@@ -57,10 +61,9 @@ export function getRoadsLine(): Promise<Object3D> {
 
     return new Promise<Object3D>(async (resolve) => {
         const road: Object3D = new Object3D();
-        const roadBlock = 9;
         const COEF_SCALE = 0.25;
 
-        for (let i = -Math.floor(roadBlock / 2); i < Math.ceil(roadBlock / 2); i++) {
+        for (let i = -Math.floor(playableArea / 2); i < Math.ceil(playableArea / 2); i++) {
             try {
                 const model = await loadFbx("assets/models/streets/", "Street_Straight.fbx");
                 model.position.set(i * 2, 0, 0);
@@ -82,12 +85,12 @@ export function getRoadsLine(): Promise<Object3D> {
         const carGenerator = new Mesh(cubeGeometry, cubeMaterial)
         carGenerator.castShadow = true
         carGenerator.position.y = 0
-        carGenerator.position.x = Math.floor(roadBlock / 2) * 2
+        carGenerator.position.x = Math.floor(playableArea / 2) * 2
         road.add(carGenerator)
 
         setTimeout(() => {
             generateCar(carGenerator);
-        }, Math.round(Math.random() * 10000) + 1000);
+        }, Math.round(Math.random() * 2000) + 1000);
 
         resolve(road);
     })
