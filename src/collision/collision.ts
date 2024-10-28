@@ -16,8 +16,6 @@ export function checkCollisions(cars: Object3D[], player: Object3D) {
 
         if (playerBox.intersectsBox(carBox) && !car.userData.hasCollided) {
             car.userData.hasCollided = true;
-            // Collision détectée, repositionner le joueur
-            // scene.remove(player);
             gsap.to(cube.rotation, {
                 duration: 1,
                 x: Math.PI * 2 * 8,
@@ -26,10 +24,8 @@ export function checkCollisions(cars: Object3D[], player: Object3D) {
             });
 
             const directionToBePushed = new Vector3();
-            // Calculate the delta Z between the carBox and the playerBox
             const left = carBox.getCenter(new Vector3()).x > playerBox.getCenter(new Vector3()).x;
 
-            // Collision detected, reposition the player
             gsap.to(cube.rotation, {
                 duration: 1,
                 x: Math.random() < 0.5 ? Math.PI / 2 : 3 * Math.PI / 2,
@@ -37,7 +33,6 @@ export function checkCollisions(cars: Object3D[], player: Object3D) {
                 z: Math.random() * Math.PI * 2 * 8
             });
 
-            // Push the player in the opposite direction
             const originalPosition = new Vector3().copy(player.position);
             gsap.to(player.position, {
                 duration: 0.5,

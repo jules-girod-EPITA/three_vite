@@ -138,12 +138,12 @@ async function init() {
       transparent: true,
       opacity: 0.4,
     })
-    const plane = new Mesh(planeGeometry, planeMaterial)
-    plane.rotateX(Math.PI / 2)
-    plane.receiveShadow = true
+    // const plane = new Mesh(planeGeometry, planeMaterial)
+    // plane.rotateX(Math.PI / 2)
+    // plane.receiveShadow = true
 
     scene.add(player);
-    scene.add(plane)
+    // scene.add(plane)
   }
 
 
@@ -178,15 +178,16 @@ async function init() {
 
 
     // ==== 🌳 GROUND ====
-    const groundGeometry = new PlaneGeometry(20, 20)
+    const groundGeometry = new PlaneGeometry(20, 300)
     const groundMaterial = new MeshStandardMaterial({
       color: 'green',
       side: 2,
     })
     const ground = new Mesh(groundGeometry, groundMaterial)
-    ground.position.y = -1
+    ground.position.y = -0.01
     ground.receiveShadow = true
     ground.rotateX(-Math.PI / 2)
+    ground.position.z = groundGeometry.parameters.height / 2 - 10
     scene.add(ground)
   }
 
@@ -254,9 +255,9 @@ async function init() {
     pointLightHelper.visible = false
     scene.add(pointLightHelper)
 
-    const gridHelper = new GridHelper(20, 20, 'teal', 'darkgray')
-    gridHelper.position.y = -0.01
-    scene.add(gridHelper)
+    // const gridHelper = new GridHelper(20, 20, 'teal', 'darkgray')
+    // gridHelper.position.y = -0.01
+    // scene.add(gridHelper)
   }
 
   // ===== 📈 STATS & CLOCK =====
@@ -351,16 +352,21 @@ function animate() {
 
   // On recupere les voitures
   let cars :Object3D[] = [];
+  let tree :Object3D[] = [];
 
   scene.traverse((child) => {
 
     if (child instanceof Group && child.name === "car") {
         cars.push(child);
     }
+    if (child instanceof Group && child.name === "tree") {
+      tree.push(child);
+    }
   });
 
   // On check les collisions avec le joueur
   checkCollisions(cars, player);
+  checkCollisions(tree, player);
 
   if (resizeRendererToDisplaySize(renderer)) {
     const canvas = renderer.domElement
