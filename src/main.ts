@@ -1,7 +1,7 @@
 import GUI from 'lil-gui'
 import {
     AmbientLight,
-    AxesHelper,
+    AxesHelper, Box3, Box3Helper,
     BoxGeometry,
     Clock,
     Group,
@@ -22,7 +22,7 @@ import { toggleFullScreen } from './helpers/fullscreen'
 import { resizeRendererToDisplaySize } from './helpers/responsiveness'
 import './style.css'
 import { checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree } from "./collision/collision";
-import { loadFbx } from "./loader/model_loader";
+import { loadFbx, loadGlb } from "./loader/model_loader";
 import { getRoadsLine } from "./terrain/road";
 import { getGrassLine } from "./terrain/grass";
 import { initButtonBehavior } from "./components/buttonBehavior";
@@ -52,12 +52,14 @@ let loadingManager: LoadingManager
 let ambientLight: AmbientLight
 export let cube: Object3D
 export let player: Player
+let crash_site: Object3D
 export let camera: PerspectiveCamera
 let cameraControls: OrbitControls
 let dragControls: DragControls
 let axesHelper: AxesHelper
 export let clock: Clock
 let stats: Stats
+let homeDecors: Object3D[] = [];
 let gui: GUI
 export const playableArea = 9 * 2;
 
@@ -120,6 +122,26 @@ async function init() {
         player.add(cube)
 
         scene.add(player);
+
+        const meshesWithoutCollision = ["Street", "Tree_1002"];
+        try {
+            crash_site = await loadGlb("assets/models/scene/", "crash_scene_2.glb");
+            crash_site.traverse((child) => {
+                if (child instanceof Mesh) {
+                    // get collision box
+                    // get if the mesh is a collision box
+
+                    if(!meshesWithoutCollision.some((meshName) => { return child.name.includes(meshName) })) {
+                        child.userData.speed = 1;
+                        homeDecors.push(child);
+                    }
+                }
+            })
+
+            scene.add(crash_site);
+        } catch (error) {
+            console.error("An error happened while loading model:", error);
+        }
     }
 
 
@@ -128,7 +150,7 @@ async function init() {
         const randomArray = Array.from({ length: 300 }, () => Math.floor(Math.random() * 100));
 
 
-        for (let i = 1; i < randomArray.length; i++) {
+        for (let i = 4; i < randomArray.length; i++) {
 
             // 0 to 50 = road
             // 51 to 100 = grass
@@ -150,12 +172,13 @@ async function init() {
     // ==== 🌲 DECORATION ====
     {
         // ==== 🌌 SKYBOX ====
-        const skyboxGeometry = new BoxGeometry(100, 100, 325 * 4)
+        const skyboxGeometry = new BoxGeometry(100, 100, 325 * 2)
         const skyboxMaterial = new MeshStandardMaterial({
             color: 'skyblue',
             side: 1,
         })
         const skybox = new Mesh(skyboxGeometry, skyboxMaterial);
+        skybox.position.z = skyboxGeometry.parameters.depth / 2 - 20
         skybox.material.emissive.set('skyblue')
         scene.add(skybox)
 
@@ -170,7 +193,7 @@ async function init() {
         ground.position.y = -0.01
         ground.receiveShadow = true
         ground.rotateX(-Math.PI / 2)
-        ground.position.z = groundGeometry.parameters.height / 2 - 10
+        ground.position.z = groundGeometry.parameters.height / 2 - 20
 
         for (let i = 0; i < 2; i++) {
             const groundMaterialOutside = new MeshStandardMaterial({
@@ -181,7 +204,7 @@ async function init() {
             groundOutside.position.y = -0.01
             groundOutside.receiveShadow = true
             groundOutside.rotateX(-Math.PI / 2)
-            groundOutside.position.z = groundGeometry.parameters.height / 2 - 10
+            groundOutside.position.z = groundGeometry.parameters.height / 2 - 20
             groundOutside.position.x = i === 0 ? -20 : 20
             scene.add(groundOutside)
         }
@@ -192,7 +215,7 @@ async function init() {
 
     // ===== 🎥 CAMERA =====
     {
-        camera = new PerspectiveCamera(60, canvas.clientWidth / canvas.clientHeight, 2.4, 30)
+        camera = new PerspectiveCamera(60, canvas.clientWidth / canvas.clientHeight, 2.4, 650)
         camera.position.set(-1, 6, -5.5)
         player.add(camera)
     }
@@ -324,6 +347,11 @@ async function init() {
         cameraFolder.add(camera, 'near', 1, 100).name('near').onChange(() => camera.updateProjectionMatrix())
         cameraFolder.add(camera, 'far', 1, 1000).name('far').onChange(() => camera.updateProjectionMatrix())
 
+        const ambulancesFolder = gui.addFolder('Ambulance')
+        ambulancesFolder.add(crash_site.rotation, 'x').min(-10).max(10).step(0.1).name('rotate x')
+        ambulancesFolder.add(crash_site.rotation, 'y').min(-10).max(10).step(0.1).name('rotate y')
+        ambulancesFolder.add(crash_site.rotation, 'z').min(-10).max(10).step(0.1).name('rotate z')
+
         // persist GUI state in local storage on changes
         gui.onFinishChange(() => {
             const guiState = gui.save()
@@ -372,6 +400,7 @@ function animate() {
     checkCollisionsCars(cars, player);
     checkCollisionsTree(trees, player);
     checkCollisionsRocks(rocks, player);
+    checkCollisionsCars(homeDecors, player);
 
     if (resizeRendererToDisplaySize(renderer)) {
         const canvas = renderer.domElement
