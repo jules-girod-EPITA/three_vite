@@ -42,6 +42,15 @@ async function loadProp(i: number, propType: PropType) {
         return await loadFbx("assets/models/props/", `${propPath}_${index}.fbx`).then((model) => {
             model.name = propName;
             model.scale.set(0.5, 0.5, 0.5)
+            if(propType === PropType.Flower)
+            {
+                model.scale.set(0.2, 0.2, 0.2)
+            }
+            else if(propType === PropType.Rock)
+            {
+                model.scale.set(0.35, 0.35, 0.35)
+            }
+
             if(propType !== PropType.DeadTree && propType !== PropType.Tree && propType !== PropType.Rock) {
                 model.position.set(i * 2 + Math.random(), 0, Math.random());
             }
