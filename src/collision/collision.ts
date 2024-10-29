@@ -9,8 +9,8 @@ export function checkCollisionsCars(cars: Object3D[], player: Object3D) {
     cars.forEach((car, index) => {
         const carBox = new Box3().setFromObject(car);
 
-        if (!car.userData.hasCollided) {
-            car.userData.hasCollided = false;
+        if (!car.userData.lastCollision) {
+            car.userData.lastCollision = new Date().getTime() - 1000;
         }
 
 
@@ -21,8 +21,8 @@ export function checkCollisionsCars(cars: Object3D[], player: Object3D) {
         // }, 10);
 
 
-        if (playerBox.intersectsBox(carBox) && !car.userData.hasCollided) {
-            car.userData.hasCollided = true;
+        if (playerBox.intersectsBox(carBox) && car.userData.lastCollision + 1000 < new Date().getTime()) {
+            car.userData.lastCollision = new Date().getTime();
             gsap.to(cube.rotation, {
                 duration: 1,
                 x: Math.PI * 2 * 8,
@@ -30,7 +30,6 @@ export function checkCollisionsCars(cars: Object3D[], player: Object3D) {
                 z: Math.PI * 2 * 8
             });
 
-            const directionToBePushed = new Vector3();
             const left = carBox.getCenter(new Vector3()).x > playerBox.getCenter(new Vector3()).x;
 
             gsap.to(cube.rotation, {
