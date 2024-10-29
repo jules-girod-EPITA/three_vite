@@ -48,7 +48,6 @@ export function getRoadsLine(): Promise<Object3D> {
             "ease": "none",
             x: -carGenerator.position.x * 2,
             onComplete: () => {
-                console.log("Car removed");
                 carGenerator.remove(car);
                 generateCar(carGenerator);
             }

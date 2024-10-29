@@ -12,7 +12,7 @@ export function loadGlb(path: string, filename: string): Promise<Group> {
 
         const cacheKey = `${path}${filename}`;
         if (objCache[cacheKey]) {
-            console.log("Model retrieved from cache: ", objCache[cacheKey]);
+            // console.log("Model retrieved from cache: ", objCache[cacheKey]);
             resolve(objCache[cacheKey].clone());
             return;
         }
