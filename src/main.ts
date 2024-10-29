@@ -1,19 +1,19 @@
 import GUI from 'lil-gui'
 import {
-  AmbientLight,
-  AxesHelper,
-  BoxGeometry,
-  Clock,
-  Group,
-  LoadingManager,
-  Mesh,
-  MeshStandardMaterial,
-  Object3D,
-  PCFSoftShadowMap,
-  PerspectiveCamera,
-  PlaneGeometry,
-  Scene,
-  WebGLRenderer,
+    AmbientLight,
+    AxesHelper,
+    BoxGeometry,
+    Clock,
+    Group,
+    LoadingManager,
+    Mesh,
+    MeshStandardMaterial,
+    Object3D,
+    PCFSoftShadowMap,
+    PerspectiveCamera,
+    PlaneGeometry,
+    Scene,
+    WebGLRenderer,
 } from 'three'
 import { DragControls } from 'three/examples/jsm/controls/DragControls'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
@@ -21,11 +21,11 @@ import Stats from 'three/examples/jsm/libs/stats.module'
 import { toggleFullScreen } from './helpers/fullscreen'
 import { resizeRendererToDisplaySize } from './helpers/responsiveness'
 import './style.css'
-import { initController } from "./controller/controller";
 import { checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree } from "./collision/collision";
 import { loadFbx } from "./loader/model_loader";
 import { getRoadsLine } from "./terrain/road";
 import { getGrassLine } from "./terrain/grass";
+import { initButtonBehavior } from "./components/buttonBehavior";
 
 class Player extends Object3D {
     private onUpdate: () => void;
@@ -65,6 +65,7 @@ export const sideLength = 1
 
 const animation = { enabled: true, play: true }
 
+initButtonBehavior();
 await init()
 animate()
 
@@ -142,8 +143,6 @@ async function init() {
                     scene.add(grass);
                 });
             }
-
-
         }
     }
 
@@ -344,10 +343,6 @@ async function init() {
 
         gui.close()
     }
-
-
-    // ===== 🎮 EVENT LISTENERS =====
-    initController()
 }
 
 function animate() {

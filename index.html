@@ -3,11 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/threejs-icon.svg" />
+  <link rel="stylesheet" href="/main.css"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Crossy Road</title>
 </head>
 <body>
 <canvas id="scene"></canvas>
+<div id="button-wrapper">
+  <div class="button">
+    <a class="play-button outline-button" id="play-button">Play</a>
+  </div>
+</div>
+<div id="score-wrapper">
+  <div class="button outline-button" style="display: flex; flex-direction: column; gap: 16px">
+    <a>Score</a>
+    <a id="score-value">0</a>
+  </div>
+</div>
 <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

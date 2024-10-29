@@ -57,6 +57,7 @@ export function initController() {
             onComplete: () => {
                 // Descendre et se déplacer simultanément vers la position cible
                 console.log(`Score : ${targetPosition.z / 2}`);
+                document.getElementById("score-value").innerText = `${Math.floor(targetPosition.z / 2)}`;
                 gsap.to(player.position, {
                     duration: duration / 1.5,
                     y: 0,
