@@ -67,14 +67,14 @@ export function getGrassLine(): Promise<Object3D> {
                 // 0 - 5 = tree
                 // 5 - 10 = Dead tree
                 // 10 - 30 = Flowers
-                // 30 - 50 = Rock
+                // 30 - 35 = Rock
                 if (randomArea[i + Math.floor(playableArea / 2)] < 5) {
                     road.add(await loadProp(i, PropType.Tree));
                 } else if (randomArea[i + Math.floor(playableArea / 2)] < 10) {
                     road.add(await loadProp(i, PropType.DeadTree));
                 } else if (randomArea[i + Math.floor(playableArea / 2)] < 30) {
                     road.add(await loadProp(i, PropType.Flower));
-                } else if (randomArea[i + Math.floor(playableArea / 2)] < 50) {
+                } else if (randomArea[i + Math.floor(playableArea / 2)] < 35) {
                     road.add(await loadProp(i, PropType.Rock));
                 }
             } catch (error) {
