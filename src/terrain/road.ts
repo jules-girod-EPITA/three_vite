@@ -4,12 +4,13 @@ import { playableArea, player, sideLength } from "../main";
 import { gsap } from "gsap";
 
 
-const cars: { model: string, speed: number }[] = [
-    { model: "model1.glb", speed: 5 },
-    { model: "model2.glb", speed: 3 },
-    { model: "model3.glb", speed: 3 },
-    { model: "model4.glb", speed: 4 },
-    { model: "model5.glb", speed: 1 }];
+const cars: { model: string, speed: number, scale: number }[] = [
+    { model: "model1.glb", speed: 5, scale: 0.5 },
+    { model: "model2.glb", speed: 3, scale: 0.5 },
+    { model: "model3.glb", speed: 3, scale: 0.5 },
+    { model: "model4.glb", speed: 4, scale: 0.5 },
+    { model: "model5.glb", speed: 1, scale: 0.5 },
+    { model: "model6.glb", speed: 6, scale: 1 }];
 
 export function getRoadsLine(): Promise<Object3D> {
     const random = Math.floor(Math.random() * cars.length);
@@ -34,7 +35,7 @@ export function getRoadsLine(): Promise<Object3D> {
 
 
         let car = await loadGlb("assets/models/cars/", cars[random].model);
-        car.scale.set(0.5, 0.5, 0.5)
+        car.scale.set(cars[random].scale, cars[random].scale, cars[random].scale)
         car.rotation.set(0, -Math.PI / 2, 0)
         car.name = "car"
         car.castShadow = true
