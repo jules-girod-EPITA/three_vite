@@ -32,11 +32,11 @@ export function initController() {
             targetPosition.z -= moveDistance; // Recule
             rotationTarget = Math.PI; // Regarde vers l'arrière
         }
-        if (event.key === 'a') {
+        if (event.key === 'a' && player.position.x < 10) {
             targetPosition.x += moveDistance; // Déplace à gauche
             rotationTarget = Math.PI / 2; // Regarde vers la gauche
         }
-        if (event.key === 'd') {
+        if (event.key === 'd' && player.position.x > -10) {
             targetPosition.x -= moveDistance; // Déplace à droite
             rotationTarget = -Math.PI / 2; // Regarde vers la droite
         }
