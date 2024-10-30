@@ -6,7 +6,7 @@ import {
     Clock,
     Group,
     LoadingManager,
-    Mesh,
+    Mesh, MeshBasicMaterial,
     MeshStandardMaterial,
     Object3D,
     PCFSoftShadowMap,
@@ -25,6 +25,8 @@ import { loadFbx, loadGlb } from "./loader/model_loader";
 import { getRoadsLine } from "./terrain/road";
 import { getGrassLine } from "./terrain/grass";
 import { initButtonBehavior } from "./components/buttonBehavior";
+import {FontLoader} from "three/examples/jsm/loaders/FontLoader";
+import {TextGeometry} from "three/examples/jsm/geometries/TextGeometry";
 
 class Player extends Object3D {
     private onUpdate: () => void;
@@ -65,8 +67,31 @@ export const sideLength = 1
 const animation = { enabled: true, play: true }
 
 initButtonBehavior();
-init()
-animate()
+init().then(
+    () => {
+        animate();
+    }
+);
+
+
+async function addHighScoreText(scene: Scene, text: string, x: number, y: number, z: number) {
+    const loader = new FontLoader();
+    const font = await loader.loadAsync('https://threejs.org/examples/fonts/gentilis_bold.typeface.json'); // Replace with the actual path to your font file
+
+    const textGeometry = new TextGeometry(text, {
+        font: font,
+        size: 1,
+        height: 0.1,
+    });
+
+    const textMaterial = new MeshBasicMaterial({ color: 'white' });
+    const textMesh = new Mesh(textGeometry, textMaterial);
+
+    textMesh.position.set(x, y, z);
+    textMesh.rotation.x = Math.PI / 2;
+    textMesh.rotation.y = Math.PI;
+    scene.add(textMesh);
+}
 
 async function init() {
     // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
@@ -146,8 +171,12 @@ async function init() {
     {
         const randomArray = Array.from({ length: 300 }, () => Math.floor(Math.random() * 100));
 
+        const highScore = Number(localStorage.getItem("highscore") || "0") || 0;
 
         for (let i = 4; i < randomArray.length; i++) {
+            if(i === highScore) {
+                addHighScoreText(scene, `Highscore ${highScore}`, 4, 0, i * 2 - 0.4);
+            }
 
             // 0 to 50 = road
             // 51 to 100 = grass

@@ -56,8 +56,14 @@ export function initController() {
             y: jumpHeight, // Monter en hauteur
             onComplete: () => {
                 // Descendre et se déplacer simultanément vers la position cible
-                console.log(`Score : ${targetPosition.z / 2}`);
-                document.getElementById("score-value").innerText = `${Math.floor(targetPosition.z / 2)}`;
+                const score = Math.max(0, Math.floor(targetPosition.z / 2));
+                const currentScore = parseInt(document.getElementById("score-value").innerText);
+                if (isNaN(currentScore) || score > currentScore) {
+                    document.getElementById("score-value").innerText = `${score}`;
+
+                    if (score > parseInt(localStorage.getItem("highscore") || "0"))
+                        localStorage.setItem("highscore", String(score));
+                }
                 gsap.to(player.position, {
                     duration: duration / 1.5,
                     y: 0,
