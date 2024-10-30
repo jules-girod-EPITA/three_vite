@@ -17,7 +17,6 @@ import {
 } from 'three'
 import { DragControls } from 'three/examples/jsm/controls/DragControls'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import Stats from 'three/examples/jsm/libs/stats.module'
 import { toggleFullScreen } from './helpers/fullscreen'
 import { resizeRendererToDisplaySize } from './helpers/responsiveness'
 import './style.css'
@@ -57,8 +56,6 @@ export let camera: PerspectiveCamera
 let cameraControls: OrbitControls
 let dragControls: DragControls
 let axesHelper: AxesHelper
-export let clock: Clock
-let stats: Stats
 let homeDecors: Object3D[] = [];
 let gui: GUI
 export const playableArea = 9 * 2;
@@ -280,9 +277,6 @@ async function init() {
 
     // ===== 📈 STATS & CLOCK =====
     {
-        clock = new Clock()
-        stats = new Stats()
-        document.body.appendChild(stats.dom)
     }
 
     // ==== 🐞 DEBUG GUI ====
@@ -376,7 +370,6 @@ async function init() {
 function animate() {
     requestAnimationFrame(animate)
 
-    stats.update()
 
     // On recupere les voitures
     let cars: Object3D[] = [];
