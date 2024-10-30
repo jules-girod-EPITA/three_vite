@@ -14,6 +14,8 @@ import {
     Scene, Vector3,
     WebGLRenderer,
 } from 'three'
+
+import Stats from 'three/examples/jsm/libs/stats.module'
 import { toggleFullScreen } from './helpers/fullscreen'
 import { resizeRendererToDisplaySize } from './helpers/responsiveness'
 import './style.css'
@@ -92,6 +94,7 @@ export let player: Player
 let crash_site: Object3D
 export let camera: PerspectiveCamera
 let axesHelper: AxesHelper
+let stats: Stats
 let homeDecors: Object3D[] = [];
 let gui: GUI
 
@@ -330,6 +333,8 @@ async function init() {
 
     // ===== 📈 STATS & CLOCK =====
     {
+        stats = new Stats()
+        document.body.appendChild(stats.dom)
     }
 
     // ==== 🐞 DEBUG GUI ====
@@ -426,6 +431,7 @@ async function init() {
 function animate() {
     requestAnimationFrame(animate)
 
+    stats.update()
 
     // On recupere les voitures
     let cars: Object3D[] = [];
