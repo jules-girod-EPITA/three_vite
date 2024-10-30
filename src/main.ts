@@ -204,39 +204,57 @@ async function init() {
             side: 1,
         })
         const skybox = new Mesh(skyboxGeometry, skyboxMaterial);
-        skybox.position.z = skyboxGeometry.parameters.depth / 2 - 20
+        skybox.position.z = skyboxGeometry.parameters.depth / 2 - 26
         skybox.material.emissive.set('skyblue')
         scene.add(skybox)
 
 
         // ==== 🌳 GROUND ====
-        const groundGeometry = new PlaneGeometry(20, 625)
-        const groundMaterial = new MeshStandardMaterial({
-            color: 'green',
-            side: 2,
-        })
-        const ground = new Mesh(groundGeometry, groundMaterial)
-        ground.position.y = -0.01
-        ground.receiveShadow = true
-        ground.rotateX(-Math.PI / 2)
-        ground.position.z = groundGeometry.parameters.height / 2 - 20
 
+
+        const groundWidth = 20;
+        const groundHeight = 625;
+        const squareSize = 2; // Size of each square in the checkerboard pattern
+
+        const lightGreenMaterial = new MeshStandardMaterial({
+            color: '#BEF466',
+            side: 2,
+        });
+        const darkGreenMaterial = new MeshStandardMaterial({
+            color: '#B7EC5E',
+            side: 2,
+        });
+
+        for (let z = 0; z < groundHeight; z += squareSize) {
+            for (let x = -groundWidth / 2 - 2; x < groundWidth / 2; x += squareSize) {
+                const groundGeometry = new PlaneGeometry(squareSize, squareSize);
+                const isLightGreen = (x / squareSize + z / squareSize) % 2 === 0;
+                const groundMaterial = isLightGreen ? lightGreenMaterial : darkGreenMaterial;
+                const groundSquare = new Mesh(groundGeometry, groundMaterial);
+                groundSquare.position.set(x + squareSize / 2 +1, -0.01, z + squareSize / 2 - 21);
+                groundSquare.receiveShadow = true;
+                groundSquare.rotateX(-Math.PI / 2);
+
+                scene.add(groundSquare);
+            }
+        }
+
+        const groundGeometry = new PlaneGeometry(20, 625);
         for (let i = 0; i < 2; i++) {
             const groundMaterialOutside = new MeshStandardMaterial({
-                color: 'darkgreen',
+                color: '#A4D74C',
                 side: 2,
             })
             const groundOutside = new Mesh(groundGeometry, groundMaterialOutside)
             groundOutside.position.y = -0.01
             groundOutside.receiveShadow = true
             groundOutside.rotateX(-Math.PI / 2)
-            groundOutside.position.z = groundGeometry.parameters.height / 2 - 20
-            groundOutside.position.x = i === 0 ? -20 : 20
+            groundOutside.position.z = groundGeometry.parameters.height / 2 - 21
+            groundOutside.position.x = i === 0 ? -21 : 21
             scene.add(groundOutside)
         }
 
 
-        scene.add(ground)
     }
 
     // ===== 🎥 CAMERA =====
