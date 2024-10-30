@@ -68,7 +68,7 @@ export const sideLength = 1
 const animation = { enabled: true, play: true }
 
 initButtonBehavior();
-await init()
+init()
 animate()
 
 async function init() {
