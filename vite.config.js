@@ -10,6 +10,7 @@ export default defineConfig({
     server: {
         open: true
     },
+    base: "/three_vite/",
     plugins: [
         viteStaticCopy({
           targets: [
