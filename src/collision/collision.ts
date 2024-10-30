@@ -1,9 +1,9 @@
-import { Box3, Box3Helper, Object3D, Vector3 } from "three";
-import { cube, scene } from "../main";
+import { Box3, Object3D, Vector3 } from "three";
+import { cube, player } from "../main";
 import { gsap } from "gsap";
 
 
-export function checkCollisionsCars(cars: Object3D[], player: Object3D) {
+export function checkCollisionsCars(cars: Object3D[]) {
     const playerBox = new Box3().setFromObject(player);
 
     cars.forEach((car, index) => {
@@ -23,6 +23,7 @@ export function checkCollisionsCars(cars: Object3D[], player: Object3D) {
 
         if (playerBox.intersectsBox(carBox) && car.userData.lastCollision + 1000 < new Date().getTime()) {
             car.userData.lastCollision = new Date().getTime();
+            player.setDeath();
             gsap.to(cube.rotation, {
                 duration: 1,
                 x: Math.PI * 2 * 8,
@@ -58,7 +59,7 @@ export function checkCollisionsCars(cars: Object3D[], player: Object3D) {
     });
 }
 
-export function checkCollisionsTree(trees: Object3D[], player: Object3D) {
+export function checkCollisionsTree(trees: Object3D[]) {
 
     trees.forEach((tree) => {
         // get tree position in world space
@@ -71,6 +72,7 @@ export function checkCollisionsTree(trees: Object3D[], player: Object3D) {
         }
 
         if (distance < 0.5 && !tree.userData.hasCollided) {
+            player.setDeath();
             tree.userData.hasCollided = true;
             gsap.to(cube.rotation, {
                 duration: 1,

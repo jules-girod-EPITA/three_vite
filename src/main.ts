@@ -11,7 +11,7 @@ import {
     PCFSoftShadowMap,
     PerspectiveCamera,
     PlaneGeometry,
-    Scene,
+    Scene, Vector3,
     WebGLRenderer,
 } from 'three'
 import { toggleFullScreen } from './helpers/fullscreen'
@@ -21,16 +21,55 @@ import { checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree } from "
 import { loadFbx, loadGlb } from "./loader/model_loader";
 import { getRoadsLine } from "./terrain/road";
 import { getGrassLine } from "./terrain/grass";
-import { initButtonBehavior } from "./components/buttonBehavior";
+import { handleButtonClick, handleUpArrow, initButtonBehavior } from "./components/buttonBehavior";
 import {FontLoader} from "three/examples/jsm/loaders/FontLoader";
 import {TextGeometry} from "three/examples/jsm/geometries/TextGeometry";
+import { gsap } from "gsap";
+import { eventListenerMouvement } from "./controller/controller";
 
 class Player extends Object3D {
     private onUpdate: () => void;
+    private death: boolean = false;
 
-    constructor(onUpdate: () => void) {
+    constructor() {
         super();
-        this.onUpdate = onUpdate;
+        this.onUpdate = () => {
+            if(this.death && camera.parent === player) {
+                const cameraRealPosition = camera.getWorldPosition(new Vector3());
+                scene.remove(camera);
+                camera.position.set(cameraRealPosition.x, cameraRealPosition.y, cameraRealPosition.z);
+                scene.add(camera);
+                const direction = new Vector3();
+                direction.subVectors(camera.position, player.position).normalize();
+                gsap.to(camera.position, {
+                    duration: 1.5,
+                    x: camera.position.x + direction.x,
+                    y: camera.position.y + direction.y,
+                    z: camera.position.z + direction.z,
+                    ease: "none",
+                });
+
+                const originalIntensity = ambientLight.intensity;
+
+                gsap.to(ambientLight, {
+                    duration: 3,
+                    intensity: 0,
+                    onComplete: () => {
+                        ambientLight.intensity = originalIntensity;
+                        reset();
+                    }
+                });
+
+            }
+        };
+    }
+
+    setDeath() {
+        this.death = true;
+    }
+
+    isDead() {
+        return this.death;
     }
 
     updateMatrixWorld(force?: boolean): void {
@@ -55,6 +94,12 @@ export let camera: PerspectiveCamera
 let axesHelper: AxesHelper
 let homeDecors: Object3D[] = [];
 let gui: GUI
+
+
+const initialCameraPosition = new Vector3(-1, 6, -5.5);
+const initialPlayerPosition = new Vector3(0, 0, 0);
+const initialPlayerRotation = new Vector3(0, 0, 0);
+
 export const playableArea = 9 * 2;
 
 export const sideLength = 1
@@ -126,17 +171,19 @@ async function init() {
 
     // ===== 📦 OBJECTS =====
     {
+
+
+        player = new Player();
         try {
             cube = await loadFbx("assets/models/", "Steve.fbx");
             cube.scale.set(0.0035, 0.0035, 0.0035);
+            cube.position.set(initialPlayerPosition.x, initialPlayerPosition.y, initialPlayerPosition.z);
         } catch (error) {
             console.error("An error happened while loading model:", error);
         }
-
-        player = new Player(() => {
-
-        });
-        player.add(cube)
+        player.position.set(initialPlayerPosition.x, initialPlayerPosition.y, initialPlayerPosition.z);
+        player.rotation.set(initialPlayerRotation.x, initialPlayerRotation.y, initialPlayerRotation.z);
+        player.add(cube);
 
         scene.add(player);
 
@@ -255,9 +302,8 @@ async function init() {
     // ===== 🎥 CAMERA =====
     {
         camera = new PerspectiveCamera(60, canvas.clientWidth / canvas.clientHeight, 2.4, 650)
-        camera.position.set(-1, 6, -5.5)
-        camera.lookAt(player.position);
-
+        camera.position.set(initialCameraPosition.x, initialCameraPosition.y, initialCameraPosition.z)
+        camera.lookAt(player.position)
         player.add(camera)
     }
 
@@ -414,4 +460,41 @@ function animate() {
 
 
     renderer.render(scene, camera)
+}
+
+function reset()
+{
+    // remove addEventListener to avoid multiple calls
+    window.removeEventListener('keydown', eventListenerMouvement);
+
+    gsap.killTweensOf(cube.position);
+    gsap.killTweensOf(cube.rotation);
+    gsap.killTweensOf(player.position);
+    gsap.killTweensOf(camera.position);
+
+    scene.remove(camera);
+    scene.remove(player);
+    scene.remove(cube);
+
+    player =  new Player();
+    player.position.set(initialPlayerPosition.x, initialPlayerPosition.y, initialPlayerPosition.z);
+    player.rotation.set(initialPlayerRotation.x, initialPlayerRotation.y, initialPlayerRotation.z);
+
+    cube.position.set(initialPlayerPosition.x, initialPlayerPosition.y, initialPlayerPosition.z);
+
+    cube.rotation.set(initialPlayerRotation.x, initialPlayerRotation.y, initialPlayerRotation.z);
+    camera.position.set(initialCameraPosition.x, initialCameraPosition.y, initialCameraPosition.z);
+    camera.lookAt(player.position);
+    player.add(cube);
+    player.add(camera);
+    scene.add(player);
+
+    document.getElementById("score-value").innerText = "0";
+
+    const button = document.getElementById("button-wrapper");
+    if (button) {
+        button.style.display = "block";
+        button.addEventListener("click", handleButtonClick);
+        window.addEventListener('keydown', handleUpArrow);
+    }
 }
