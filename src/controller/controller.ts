@@ -6,9 +6,9 @@ import { gsap } from "gsap";
 export function initController() {
     window.addEventListener('keydown', (event) => {
 
-        console.log(`Key pressed: ${event.key}`, player.position);
+        console.log(`Key pressed: ${event.key}`, cube.position);
 
-        if (player.position.y != 0)
+        if (cube.position.y != 0 || player.position.y != 0)
             return;
 
         const jumpHeight = 1.0; // Hauteur du saut
@@ -51,7 +51,7 @@ export function initController() {
         });
 
 
-        gsap.to(player.position, {
+        gsap.to(cube.position, {
             duration: duration,
             y: jumpHeight, // Monter en hauteur
             onComplete: () => {
@@ -64,13 +64,22 @@ export function initController() {
                     if (score > parseInt(localStorage.getItem("highscore") || "0"))
                         localStorage.setItem("highscore", String(score));
                 }
+
                 gsap.to(player.position, {
                     duration: duration / 1.5,
-                    y: 0,
                     x: targetPosition.x,
                     z: targetPosition.z,
+                    ease: "none",
+                });
+
+                gsap.to(cube.position, {
+                    duration: duration / 1.5,
+                    y: 0,
+                    ease: "none",
                 });
             }
         });
+
+
     });
 }

@@ -1,9 +1,8 @@
 import GUI from 'lil-gui'
 import {
     AmbientLight,
-    AxesHelper, Box3, Box3Helper,
+    AxesHelper,
     BoxGeometry,
-    Clock,
     Group,
     LoadingManager,
     Mesh, MeshBasicMaterial,
@@ -15,8 +14,6 @@ import {
     Scene,
     WebGLRenderer,
 } from 'three'
-import { DragControls } from 'three/examples/jsm/controls/DragControls'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { toggleFullScreen } from './helpers/fullscreen'
 import { resizeRendererToDisplaySize } from './helpers/responsiveness'
 import './style.css'
@@ -55,8 +52,6 @@ export let cube: Object3D
 export let player: Player
 let crash_site: Object3D
 export let camera: PerspectiveCamera
-let cameraControls: OrbitControls
-let dragControls: DragControls
 let axesHelper: AxesHelper
 let homeDecors: Object3D[] = [];
 let gui: GUI
@@ -139,7 +134,7 @@ async function init() {
         }
 
         player = new Player(() => {
-            cameraControls.target = player.position.clone()
+
         });
         player.add(cube)
 
@@ -261,48 +256,13 @@ async function init() {
     {
         camera = new PerspectiveCamera(60, canvas.clientWidth / canvas.clientHeight, 2.4, 650)
         camera.position.set(-1, 6, -5.5)
+        camera.lookAt(player.position);
+
         player.add(camera)
     }
 
     // ===== 🕹️ CONTROLS =====
     {
-        cameraControls = new OrbitControls(camera, canvas)
-        cameraControls.target = cube.position.clone()
-        cameraControls.enableDamping = true
-        cameraControls.autoRotate = false
-        cameraControls.update()
-
-        dragControls = new DragControls([cube], camera, renderer.domElement)
-        dragControls.addEventListener('hoveron', (event) => {
-            const mesh = event.object as Mesh
-            const material = mesh.material as MeshStandardMaterial
-            material.emissive.set('orange')
-        })
-        dragControls.addEventListener('hoveroff', (event) => {
-            const mesh = event.object as Mesh
-            const material = mesh.material as MeshStandardMaterial
-            material.emissive.set('black')
-        })
-        dragControls.addEventListener('dragstart', (event) => {
-            const mesh = event.object as Mesh
-            const material = mesh.material as MeshStandardMaterial
-            cameraControls.enabled = false
-            animation.play = false
-            material.emissive.set('black')
-            material.opacity = 0.7
-            material.needsUpdate = true
-        })
-        dragControls.addEventListener('dragend', (event) => {
-            cameraControls.enabled = true
-            animation.play = true
-            const mesh = event.object as Mesh
-            const material = mesh.material as MeshStandardMaterial
-            material.emissive.set('black')
-            material.opacity = 1
-            material.needsUpdate = true
-        })
-        dragControls.enabled = false
-
         // Full screen
         window.addEventListener('dblclick', (event) => {
             if (event.target === canvas) {
@@ -365,8 +325,6 @@ async function init() {
 
         cubeOneFolder.add(animation, 'enabled').name('animated')
 
-        const controlsFolder = gui.addFolder('Controls')
-        controlsFolder.add(dragControls, 'enabled').name('drag controls')
 
         const lightsFolder = gui.addFolder('Lights')
         lightsFolder.add(ambientLight, 'visible').name('ambient light')
@@ -376,11 +334,16 @@ async function init() {
         helpersFolder.add(axesHelper, 'visible').name('axes')
 
         const cameraFolder = gui.addFolder('Camera')
-        cameraFolder.add(cameraControls, 'autoRotate')
-        // camera positoin
+        // camera position
         cameraFolder.add(camera.position, 'x').min(-10).max(10).step(0.5).name('pos x')
         cameraFolder.add(camera.position, 'y').min(-10).max(10).step(0.5).name('pos y')
         cameraFolder.add(camera.position, 'z').min(-10).max(10).step(0.5).name('pos z')
+
+        // camera Rotation
+        cameraFolder.add(camera.rotation, 'x').min(-Math.PI).max(Math.PI).step(0.1).name('rot x')
+        cameraFolder.add(camera.rotation, 'y').min(-Math.PI).max(Math.PI).step(0.1).name('rot y')
+        cameraFolder.add(camera.rotation, 'z').min(-Math.PI).max(Math.PI).step(0.1).name('rot z')
+
         // camera fov
         cameraFolder.add(camera, 'fov', 1, 180).name('fov').onChange(() => camera.updateProjectionMatrix())
 
@@ -449,7 +412,6 @@ function animate() {
     }
 
 
-    cameraControls.update()
 
     renderer.render(scene, camera)
 }
