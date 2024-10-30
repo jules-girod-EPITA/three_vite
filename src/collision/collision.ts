@@ -120,13 +120,13 @@ export function checkCollisionsRocks(rocks: Object3D[]) {
 
 
 
-        if (!rock.userData.hasCollided) {
-            rock.userData.hasCollided = false;
+        if (!rock.userData.lastCollision) {
+            rock.userData.lastCollision = new Date().getTime() - 1000;
         }
 
 
-        if (distance < 1 && !rock.userData.hasCollided) {
-            rock.userData.hasCollided = true;
+        if (distance < 1 && rock.userData.lastCollision + 1000 < new Date().getTime()) {
+            rock.userData.lastCollision = new Date().getTime();
 
             let front = rockPosition.z === playerPosition.z ? 0 : rockPosition.z > playerPosition.z ? 1 : -1;
 
