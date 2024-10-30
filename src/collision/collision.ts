@@ -4,6 +4,9 @@ import { gsap } from "gsap";
 
 
 export function checkCollisionsCars(cars: Object3D[]) {
+    if(player.done)
+        return;
+
     const playerBox = new Box3().setFromObject(player);
 
     cars.forEach((car, index) => {
@@ -60,6 +63,8 @@ export function checkCollisionsCars(cars: Object3D[]) {
 }
 
 export function checkCollisionsTree(trees: Object3D[]) {
+    if(player.done)
+        return;
 
     trees.forEach((tree) => {
         // get tree position in world space
@@ -115,7 +120,9 @@ export function checkCollisionsTree(trees: Object3D[]) {
     });
 }
 
-export function checkCollisionsRocks(rocks: Object3D[], player: Object3D) {
+export function checkCollisionsRocks(rocks: Object3D[]) {
+    if(player.done)
+        return;
     rocks.forEach((rock) => {
         // get tree position in world space
         const rockPosition = rock.getWorldPosition(new Vector3());

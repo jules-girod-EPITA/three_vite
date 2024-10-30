@@ -5,13 +5,16 @@ import {
     BoxGeometry,
     Group,
     LoadingManager,
-    Mesh, MeshBasicMaterial,
+    Mesh,
+    MeshBasicMaterial,
     MeshStandardMaterial,
     Object3D,
     PCFSoftShadowMap,
     PerspectiveCamera,
     PlaneGeometry,
-    Scene, Vector3,
+    Scene,
+    SpotLight,
+    Vector3,
     WebGLRenderer,
 } from 'three'
 
@@ -19,24 +22,26 @@ import Stats from 'three/examples/jsm/libs/stats.module'
 import { toggleFullScreen } from './helpers/fullscreen'
 import { resizeRendererToDisplaySize } from './helpers/responsiveness'
 import './style.css'
-import { checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree } from "./collision/collision";
 import { loadFbx, loadGlb } from "./loader/model_loader";
 import { getRoadsLine } from "./terrain/road";
 import { getGrassLine } from "./terrain/grass";
 import { handleButtonClick, handleUpArrow, initButtonBehavior } from "./components/buttonBehavior";
-import {FontLoader} from "three/examples/jsm/loaders/FontLoader";
-import {TextGeometry} from "three/examples/jsm/geometries/TextGeometry";
+import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
+import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
 import { gsap } from "gsap";
 import { eventListenerMouvement } from "./controller/controller";
+import { checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree } from "./collision/collision";
 
 class Player extends Object3D {
     private onUpdate: () => void;
     private death: boolean = false;
+    public done: boolean = false;
+    private animationDone: number= 0;
 
     constructor() {
         super();
         this.onUpdate = () => {
-            if(this.death && camera.parent === player) {
+            if(this.death && camera.parent === player && !this.done) {
                 const cameraRealPosition = camera.getWorldPosition(new Vector3());
                 scene.remove(camera);
                 camera.position.set(cameraRealPosition.x, cameraRealPosition.y, cameraRealPosition.z);
@@ -63,6 +68,77 @@ class Player extends Object3D {
                 });
 
             }
+            else if (this.position.z === 111 * 2 && !this.death && !this.done) {
+                this.done = true;
+                scene.remove(camera);
+                camera.position.set(-6, 3.5, 222);
+                scene.add(camera);
+                camera.lookAt(2.5, 2, 230);
+
+                player.position.set(0, 0, 111 *2);
+
+                gsap.to(player.position, {
+                    duration: 1,
+                    z: 226,
+                    ease: "none",
+                    onComplete: () => {
+                        gsap.to(cube.rotation, {
+                            duration: 0.7,
+                            y: Math.PI /2,
+                            ease: "none",
+                        });
+                        gsap.to(player.position, {
+                            duration: 0.35,
+                            y: 0.28,
+                            z: 227.6,
+                            ease: "none",
+                            onComplete: () => {
+                                gsap.to(player.position, {
+                                    duration: 0.35,
+                                    x: 2,
+                                    z: 228.2,
+                                    ease: "none",
+                                    onComplete: () => {
+                                        this.animationDone = 1;
+                                    }
+                                });
+                            }
+                        });
+
+                    }
+                });
+            }
+            else if(this.animationDone === 1)
+            {
+                this.animationDone = 2;
+                const lightIntensity = 1000;
+                const spotLight = new SpotLight('red', lightIntensity);
+                spotLight.position.set(0, 8.5, 244);
+                scene.add(spotLight);
+
+                // make the light blink
+                gsap.to(spotLight, {
+                    duration: 0.5,
+                    intensity: 0,
+                    repeat: 5,
+                    ease: "bounce.inOut",
+                    onComplete: () => {
+                        const originalIntensity = ambientLight.intensity;
+
+
+                        gsap.to(ambientLight, {
+                            duration: 3,
+                            intensity: 0,
+                            onComplete: () => {
+                                ambientLight.intensity = originalIntensity;
+                                reset();
+                            }
+                        });
+                    }
+                });
+
+            }
+
         };
     }
 
@@ -84,6 +160,8 @@ class Player extends Object3D {
 
 const CANVAS_ID = 'scene'
 
+let hospital_site: Object3D
+
 let canvas: HTMLElement
 let renderer: WebGLRenderer
 export let scene: Scene
@@ -91,7 +169,6 @@ let loadingManager: LoadingManager
 let ambientLight: AmbientLight
 export let cube: Object3D
 export let player: Player
-let crash_site: Object3D
 export let camera: PerspectiveCamera
 let axesHelper: AxesHelper
 let stats: Stats
@@ -192,7 +269,7 @@ async function init() {
 
         const meshesWithoutCollision = ["Street", "Tree_1002"];
         try {
-            crash_site = await loadGlb("assets/models/scene/", "crash_scene_2.glb");
+            const crash_site = await loadGlb("assets/models/scene/", "crash_scene_2.glb");
             crash_site.traverse((child) => {
                 if (child instanceof Mesh) {
                     // get collision box
@@ -209,12 +286,34 @@ async function init() {
         } catch (error) {
             console.error("An error happened while loading model:", error);
         }
+
+        try {
+            hospital_site = await loadGlb("assets/models/scene/", "hospital_scene.glb");
+            hospital_site.traverse((child) => {
+                if (child instanceof Mesh) {
+                    // get collision box
+                    // get if the mesh is a collision box
+
+                    if (!meshesWithoutCollision.some((meshName) => { return child.name.includes(meshName) })) {
+                        child.userData.speed = 1;
+                        homeDecors.push(child);
+                    }
+                }
+            })
+
+            hospital_site.position.set(4, 0, 103 * 2);
+            hospital_site.rotateY(Math.PI)
+
+            scene.add(hospital_site);
+        } catch (error) {
+            console.error("An error happened while loading model:", error);
+        }
     }
 
 
     // === 📦 FBX OBJECT ===
     {
-        const randomArray = Array.from({ length: 300 }, () => Math.floor(Math.random() * 100));
+        const randomArray = Array.from({ length: 100 }, () => Math.floor(Math.random() * 100));
 
         const highScore = Number(localStorage.getItem("highscore") || "0") || 0;
 
@@ -258,7 +357,7 @@ async function init() {
 
 
         const groundWidth = 20;
-        const groundHeight = 625;
+        const groundHeight = 150 * 2;
         const squareSize = 2; // Size of each square in the checkerboard pattern
 
         const lightGreenMaterial = new MeshStandardMaterial({
@@ -276,7 +375,7 @@ async function init() {
                 const isLightGreen = (x / squareSize + z / squareSize) % 2 === 0;
                 const groundMaterial = isLightGreen ? lightGreenMaterial : darkGreenMaterial;
                 const groundSquare = new Mesh(groundGeometry, groundMaterial);
-                groundSquare.position.set(x + squareSize / 2 +1, -0.01, z + squareSize / 2 - 21);
+                groundSquare.position.set(x + squareSize / 2 + 1, -0.01, z + squareSize / 2 - 25);
                 groundSquare.receiveShadow = true;
                 groundSquare.rotateX(-Math.PI / 2);
 
@@ -284,7 +383,7 @@ async function init() {
             }
         }
 
-        const groundGeometry = new PlaneGeometry(20, 625);
+        const groundGeometry = new PlaneGeometry(groundWidth, groundHeight);
         for (let i = 0; i < 2; i++) {
             const groundMaterialOutside = new MeshStandardMaterial({
                 color: '#A4D74C',
@@ -294,7 +393,7 @@ async function init() {
             groundOutside.position.y = -0.01
             groundOutside.receiveShadow = true
             groundOutside.rotateX(-Math.PI / 2)
-            groundOutside.position.z = groundGeometry.parameters.height / 2 - 21
+            groundOutside.position.z = groundGeometry.parameters.height / 2 - 25
             groundOutside.position.x = i === 0 ? -21 : 21
             scene.add(groundOutside)
         }
@@ -348,9 +447,9 @@ async function init() {
         })
         const cubeOneFolder = gui.addFolder('Cube one')
 
-        cubeOneFolder.add(cube.position, 'x').min(-5).max(5).step(0.5).name('pos x')
-        cubeOneFolder.add(cube.position, 'y').min(-5).max(5).step(0.5).name('pos y')
-        cubeOneFolder.add(cube.position, 'z').min(-5).max(5).step(0.5).name('pos z')
+        cubeOneFolder.add(player.position, 'x').min(-5).max(5).step(0.1).name('pos x')
+        cubeOneFolder.add(player.position, 'y').min(-5).max(5).step(0.1).name('pos y')
+        cubeOneFolder.add(player.position, 'z').min(-5).max(250).step(0.1).name('pos z')
 
         let axesHelperOnCube: AxesHelper = new AxesHelper();
         // adding checkbox add or remove the AxisHelper to the cube
@@ -388,7 +487,7 @@ async function init() {
         // camera position
         cameraFolder.add(camera.position, 'x').min(-10).max(10).step(0.5).name('pos x')
         cameraFolder.add(camera.position, 'y').min(-10).max(10).step(0.5).name('pos y')
-        cameraFolder.add(camera.position, 'z').min(-10).max(10).step(0.5).name('pos z')
+        cameraFolder.add(camera.position, 'z').min(-10).max(300).step(0.5).name('pos z')
 
         // camera Rotation
         cameraFolder.add(camera.rotation, 'x').min(-Math.PI).max(Math.PI).step(0.1).name('rot x')
@@ -403,9 +502,9 @@ async function init() {
         cameraFolder.add(camera, 'far', 1, 1000).name('far').onChange(() => camera.updateProjectionMatrix())
 
         const ambulancesFolder = gui.addFolder('Ambulance')
-        ambulancesFolder.add(crash_site.rotation, 'x').min(-10).max(10).step(0.1).name('rotate x')
-        ambulancesFolder.add(crash_site.rotation, 'y').min(-10).max(10).step(0.1).name('rotate y')
-        ambulancesFolder.add(crash_site.rotation, 'z').min(-10).max(10).step(0.1).name('rotate z')
+        ambulancesFolder.add(hospital_site.rotation, 'x').min(-10).max(10).step(0.1).name('rotate x')
+        ambulancesFolder.add(hospital_site.rotation, 'y').min(-10).max(10).step(0.1).name('rotate y')
+        ambulancesFolder.add(hospital_site.rotation, 'z').min(-10).max(10).step(0.1).name('rotate z')
 
         // persist GUI state in local storage on changes
         gui.onFinishChange(() => {
@@ -482,7 +581,7 @@ function reset()
     scene.remove(player);
     scene.remove(cube);
 
-    player =  new Player();
+    player = new Player();
     player.position.set(initialPlayerPosition.x, initialPlayerPosition.y, initialPlayerPosition.z);
     player.rotation.set(initialPlayerRotation.x, initialPlayerRotation.y, initialPlayerRotation.z);
 
