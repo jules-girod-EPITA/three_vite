@@ -74,20 +74,13 @@ export function getRoadsLine(): Promise<Object3D> {
             }
         }
 
-        const cubeGeometry = new BoxGeometry(sideLength, sideLength, sideLength)
-        const cubeMaterial = new MeshStandardMaterial({
-            color: 'black',
-            metalness: 0.5,
-            roughness: 0.7,
-        })
-        const carGenerator = new Mesh(cubeGeometry, cubeMaterial)
-        carGenerator.castShadow = true
-        carGenerator.position.y = 0
-        carGenerator.position.x = Math.floor(playableArea / 2) * 2
-        road.add(carGenerator)
+        const tunnelEntrance = await loadFbx("assets/models/streets/", "Tunnel_Entrance.fbx");
+        tunnelEntrance.scale.set(0.5, 0.5, 0.5);
+        tunnelEntrance.position.set(Math.floor(playableArea / 2) * 2, 0, 0);
+        road.add(tunnelEntrance);
 
         setTimeout(() => {
-            generateCar(carGenerator);
+            generateCar(tunnelEntrance);
         }, Math.round(Math.random() * 2000) + 1000);
 
         resolve(road);
