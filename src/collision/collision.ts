@@ -67,18 +67,17 @@ export function checkCollisionsTree(trees: Object3D[]) {
         return;
 
     trees.forEach((tree) => {
-        // get tree position in world space
         const treePosition = tree.getWorldPosition(new Vector3());
         const playerPosition = player.getWorldPosition(new Vector3());
         const distance = treePosition.distanceTo(playerPosition);
 
         if (!tree.userData.hasCollided) {
-            tree.userData.hasCollided = false;
+            tree.userData.hasCollided = new Date().getTime() - 4000;
         }
 
-        if (distance < 0.5 && !tree.userData.hasCollided) {
+        if (distance < 0.5 && tree.userData.hasCollided + 4000 < new Date().getTime()) {
             player.setDeath();
-            tree.userData.hasCollided = true;
+            tree.userData.hasCollided = new Date().getTime();
             gsap.to(cube.rotation, {
                 duration: 1,
                 x: Math.PI * 2 * 8,
@@ -86,7 +85,6 @@ export function checkCollisionsTree(trees: Object3D[]) {
                 z: Math.PI * 2 * 8
             });
 
-            const directionToBePushed = new Vector3();
             const left = treePosition.x === playerPosition.x ? 0 : treePosition.x > playerPosition.x ? 1 : -1;
             const front = treePosition.z === playerPosition.z ? 0 : treePosition.z > playerPosition.z ? 1 : -1;
 
@@ -124,7 +122,6 @@ export function checkCollisionsRocks(rocks: Object3D[]) {
     if(player.done)
         return;
     rocks.forEach((rock) => {
-        // get tree position in world space
         const rockPosition = rock.getWorldPosition(new Vector3());
         const playerPosition = player.getWorldPosition(new Vector3());
         const distance = rockPosition.distanceTo(playerPosition);
