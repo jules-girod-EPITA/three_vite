@@ -19,7 +19,6 @@ import {
 } from 'three'
 
 import Stats from 'three/examples/jsm/libs/stats.module'
-import { toggleFullScreen } from './helpers/fullscreen'
 import { resizeRendererToDisplaySize } from './helpers/responsiveness'
 import './style.css'
 import { loadFbx, loadGlb } from "./loader/model_loader";
@@ -116,7 +115,6 @@ class Player extends Object3D {
                 spotLight.position.set(0, 8.5, 244);
                 scene.add(spotLight);
 
-                // make the light blink
                 gsap.to(spotLight, {
                     duration: 0.5,
                     intensity: 0,
@@ -170,10 +168,8 @@ let ambientLight: AmbientLight
 export let cube: Object3D
 export let player: Player
 export let camera: PerspectiveCamera
-let axesHelper: AxesHelper
 let stats: Stats
 let homeDecors: Object3D[] = [];
-let gui: GUI
 
 
 const initialCameraPosition = new Vector3(-1, 6, -5.5);
@@ -196,7 +192,7 @@ init().then(
 
 async function addHighScoreText(scene: Scene, text: string, x: number, y: number, z: number) {
     const loader = new FontLoader();
-    const font = await loader.loadAsync('https://threejs.org/examples/fonts/gentilis_bold.typeface.json'); // Replace with the actual path to your font file
+    const font = await loader.loadAsync('https://threejs.org/examples/fonts/gentilis_bold.typeface.json');
 
     const textGeometry = new TextGeometry(text, {
         font: font,
@@ -216,7 +212,7 @@ async function addHighScoreText(scene: Scene, text: string, x: number, y: number
 async function init() {
     // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
     {
-        canvas = document.querySelector(`canvas#${CANVAS_ID}`)!
+        canvas = document.querySelector<HTMLElement>(`canvas#${CANVAS_ID}`)!;
         renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true })
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
         renderer.shadowMap.enabled = true
@@ -277,7 +273,7 @@ async function init() {
 
                     if(!meshesWithoutCollision.some((meshName) => { return child.name.includes(meshName) })) {
                         child.userData.speed = 1;
-                        homeDecors.push(child);
+                        homeDecors.push(child as Object3D);
                     }
                 }
             })
@@ -291,12 +287,10 @@ async function init() {
             hospital_site = await loadGlb("assets/models/scene/", "hospital_scene.glb");
             hospital_site.traverse((child) => {
                 if (child instanceof Mesh) {
-                    // get collision box
-                    // get if the mesh is a collision box
 
                     if (!meshesWithoutCollision.some((meshName) => { return child.name.includes(meshName) })) {
                         child.userData.speed = 1;
-                        homeDecors.push(child);
+                        homeDecors.push(child as Object3D);
                     }
                 }
             })
@@ -409,122 +403,101 @@ async function init() {
         player.add(camera)
     }
 
-    // ===== 🕹️ CONTROLS =====
-    {
-        // Full screen
-        window.addEventListener('dblclick', (event) => {
-            if (event.target === canvas) {
-                toggleFullScreen(canvas)
-            }
-        })
-    }
-
-    // ===== 🪄 HELPERS =====
-    {
-        axesHelper = new AxesHelper(4)
-        axesHelper.visible = false
-        scene.add(axesHelper)
-
-        // const gridHelper = new GridHelper(20, 20, 'teal', 'darkgray')
-        // gridHelper.position.y = -0.01
-        // scene.add(gridHelper)
-    }
-
     // ===== 📈 STATS & CLOCK =====
     {
         stats = new Stats()
-        document.body.appendChild(stats.dom)
+        // document.body.appendChild(stats.dom)
     }
 
-    // ==== 🐞 DEBUG GUI ====
-    {
-        gui = new GUI({ title: '🐞 Debug GUI', width: 300 })
-        // open GUI by pressing 'g' key
-        window.addEventListener('keydown', (event) => {
-            if (event.key === 'g') {
-                gui.openAnimated(true);
-            }
-        })
-        const cubeOneFolder = gui.addFolder('Cube one')
-
-        cubeOneFolder.add(player.position, 'x').min(-5).max(5).step(0.1).name('pos x')
-        cubeOneFolder.add(player.position, 'y').min(-5).max(5).step(0.1).name('pos y')
-        cubeOneFolder.add(player.position, 'z').min(-5).max(250).step(0.1).name('pos z')
-
-        let axesHelperOnCube: AxesHelper = new AxesHelper();
-        // adding checkbox add or remove the AxisHelper to the cube
-        axesHelperOnCube.renderOrder = 1;
-        cube.add(axesHelperOnCube);
-
-
-        cubeOneFolder.add({
-            toggleAxisHelper: () => {
-                axesHelperOnCube.visible = !axesHelperOnCube.visible;
-            }
-        }, 'toggleAxisHelper').name('toggle AxisHelper')
-
-        cubeOneFolder
-            .add(cube.rotation, 'x', -Math.PI * 2, Math.PI * 2, Math.PI / 4)
-            .name('rotate x')
-        cubeOneFolder
-            .add(cube.rotation, 'y', -Math.PI * 2, Math.PI * 2, Math.PI / 4)
-            .name('rotate y')
-        cubeOneFolder
-            .add(cube.rotation, 'z', -Math.PI * 2, Math.PI * 2, Math.PI / 4)
-            .name('rotate z')
-
-        cubeOneFolder.add(animation, 'enabled').name('animated')
-
-
-        const lightsFolder = gui.addFolder('Lights')
-        lightsFolder.add(ambientLight, 'visible').name('ambient light')
-        lightsFolder.add(ambientLight, 'intensity', 0, 10, 0.1).name('ambient light intensity')
-
-        const helpersFolder = gui.addFolder('Helpers')
-        helpersFolder.add(axesHelper, 'visible').name('axes')
-
-        const cameraFolder = gui.addFolder('Camera')
-        // camera position
-        cameraFolder.add(camera.position, 'x').min(-10).max(10).step(0.5).name('pos x')
-        cameraFolder.add(camera.position, 'y').min(-10).max(10).step(0.5).name('pos y')
-        cameraFolder.add(camera.position, 'z').min(-10).max(300).step(0.5).name('pos z')
-
-        // camera Rotation
-        cameraFolder.add(camera.rotation, 'x').min(-Math.PI).max(Math.PI).step(0.1).name('rot x')
-        cameraFolder.add(camera.rotation, 'y').min(-Math.PI).max(Math.PI).step(0.1).name('rot y')
-        cameraFolder.add(camera.rotation, 'z').min(-Math.PI).max(Math.PI).step(0.1).name('rot z')
-
-        // camera fov
-        cameraFolder.add(camera, 'fov', 1, 180).name('fov').onChange(() => camera.updateProjectionMatrix())
-
-        // camera near and far
-        cameraFolder.add(camera, 'near', 1, 100).name('near').onChange(() => camera.updateProjectionMatrix())
-        cameraFolder.add(camera, 'far', 1, 1000).name('far').onChange(() => camera.updateProjectionMatrix())
-
-        const ambulancesFolder = gui.addFolder('Ambulance')
-        ambulancesFolder.add(hospital_site.rotation, 'x').min(-10).max(10).step(0.1).name('rotate x')
-        ambulancesFolder.add(hospital_site.rotation, 'y').min(-10).max(10).step(0.1).name('rotate y')
-        ambulancesFolder.add(hospital_site.rotation, 'z').min(-10).max(10).step(0.1).name('rotate z')
-
-        // persist GUI state in local storage on changes
-        gui.onFinishChange(() => {
-            const guiState = gui.save()
-            localStorage.setItem('guiState', JSON.stringify(guiState))
-        })
-
-        // load GUI state if available in local storage
-        const guiState = localStorage.getItem('guiState')
-        if (guiState) gui.load(JSON.parse(guiState))
-
-        // reset GUI state button
-        const resetGui = () => {
-            localStorage.removeItem('guiState')
-            gui.reset()
-        }
-        gui.add({ resetGui }, 'resetGui').name('RESET')
-
-        gui.close()
-    }
+    // // ==== 🐞 DEBUG GUI ====
+    // {
+    //     gui = new GUI({ title: '🐞 Debug GUI', width: 300 })
+    //     // open GUI by pressing 'g' key
+    //     window.addEventListener('keydown', (event) => {
+    //         if (event.key === 'g') {
+    //             gui.openAnimated(true);
+    //         }
+    //     })
+    //     const cubeOneFolder = gui.addFolder('Cube one')
+    //
+    //     cubeOneFolder.add(player.position, 'x').min(-5).max(5).step(0.1).name('pos x')
+    //     cubeOneFolder.add(player.position, 'y').min(-5).max(5).step(0.1).name('pos y')
+    //     cubeOneFolder.add(player.position, 'z').min(-5).max(250).step(0.1).name('pos z')
+    //
+    //     let axesHelperOnCube: AxesHelper = new AxesHelper();
+    //     // adding checkbox add or remove the AxisHelper to the cube
+    //     axesHelperOnCube.renderOrder = 1;
+    //     cube.add(axesHelperOnCube);
+    //
+    //
+    //     cubeOneFolder.add({
+    //         toggleAxisHelper: () => {
+    //             axesHelperOnCube.visible = !axesHelperOnCube.visible;
+    //         }
+    //     }, 'toggleAxisHelper').name('toggle AxisHelper')
+    //
+    //     cubeOneFolder
+    //         .add(cube.rotation, 'x', -Math.PI * 2, Math.PI * 2, Math.PI / 4)
+    //         .name('rotate x')
+    //     cubeOneFolder
+    //         .add(cube.rotation, 'y', -Math.PI * 2, Math.PI * 2, Math.PI / 4)
+    //         .name('rotate y')
+    //     cubeOneFolder
+    //         .add(cube.rotation, 'z', -Math.PI * 2, Math.PI * 2, Math.PI / 4)
+    //         .name('rotate z')
+    //
+    //     cubeOneFolder.add(animation, 'enabled').name('animated')
+    //
+    //
+    //     const lightsFolder = gui.addFolder('Lights')
+    //     lightsFolder.add(ambientLight, 'visible').name('ambient light')
+    //     lightsFolder.add(ambientLight, 'intensity', 0, 10, 0.1).name('ambient light intensity')
+    //
+    //     const helpersFolder = gui.addFolder('Helpers')
+    //     helpersFolder.add(axesHelper, 'visible').name('axes')
+    //
+    //     const cameraFolder = gui.addFolder('Camera')
+    //     // camera position
+    //     cameraFolder.add(camera.position, 'x').min(-10).max(10).step(0.5).name('pos x')
+    //     cameraFolder.add(camera.position, 'y').min(-10).max(10).step(0.5).name('pos y')
+    //     cameraFolder.add(camera.position, 'z').min(-10).max(300).step(0.5).name('pos z')
+    //
+    //     // camera Rotation
+    //     cameraFolder.add(camera.rotation, 'x').min(-Math.PI).max(Math.PI).step(0.1).name('rot x')
+    //     cameraFolder.add(camera.rotation, 'y').min(-Math.PI).max(Math.PI).step(0.1).name('rot y')
+    //     cameraFolder.add(camera.rotation, 'z').min(-Math.PI).max(Math.PI).step(0.1).name('rot z')
+    //
+    //     // camera fov
+    //     cameraFolder.add(camera, 'fov', 1, 180).name('fov').onChange(() => camera.updateProjectionMatrix())
+    //
+    //     // camera near and far
+    //     cameraFolder.add(camera, 'near', 1, 100).name('near').onChange(() => camera.updateProjectionMatrix())
+    //     cameraFolder.add(camera, 'far', 1, 1000).name('far').onChange(() => camera.updateProjectionMatrix())
+    //
+    //     const ambulancesFolder = gui.addFolder('Ambulance')
+    //     ambulancesFolder.add(hospital_site.rotation, 'x').min(-10).max(10).step(0.1).name('rotate x')
+    //     ambulancesFolder.add(hospital_site.rotation, 'y').min(-10).max(10).step(0.1).name('rotate y')
+    //     ambulancesFolder.add(hospital_site.rotation, 'z').min(-10).max(10).step(0.1).name('rotate z')
+    //
+    //     // persist GUI state in local storage on changes
+    //     gui.onFinishChange(() => {
+    //         const guiState = gui.save()
+    //         localStorage.setItem('guiState', JSON.stringify(guiState))
+    //     })
+    //
+    //     // load GUI state if available in local storage
+    //     const guiState = localStorage.getItem('guiState')
+    //     if (guiState) gui.load(JSON.parse(guiState))
+    //
+    //     // reset GUI state button
+    //     const resetGui = () => {
+    //         localStorage.removeItem('guiState')
+    //         gui.reset()
+    //     }
+    //     gui.add({ resetGui }, 'resetGui').name('RESET')
+    //
+    //     gui.close()
+    // }
 }
 
 function animate() {
@@ -540,21 +513,20 @@ function animate() {
     scene.traverse((child) => {
 
         if (child instanceof Group && child.name === "car") {
-            cars.push(child);
+            cars.push(child as Object3D);
         }
         if (child instanceof Group && child.name === "tree" || child.name === "dead_tree") {
-            trees.push(child);
+            trees.push(child as Object3D);
         }
         if (child instanceof Group && child.name === "rock") {
-            rocks.push(child);
+            rocks.push(child as Object3D);
         }
     });
 
-    // On check les collisions avec le joueur
-    checkCollisionsCars(cars, player);
-    checkCollisionsTree(trees, player);
-    checkCollisionsRocks(rocks, player);
-    checkCollisionsCars(homeDecors, player);
+    checkCollisionsCars(cars);
+    checkCollisionsTree(trees);
+    checkCollisionsRocks(rocks);
+    checkCollisionsCars(homeDecors);
 
     if (resizeRendererToDisplaySize(renderer)) {
         const canvas = renderer.domElement
@@ -569,7 +541,6 @@ function animate() {
 
 function reset()
 {
-    // remove addEventListener to avoid multiple calls
     window.removeEventListener('keydown', eventListenerMouvement);
 
     gsap.killTweensOf(cube.position);

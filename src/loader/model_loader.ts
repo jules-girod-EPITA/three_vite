@@ -12,7 +12,6 @@ export function loadGlb(path: string, filename: string): Promise<Group> {
 
         const cacheKey = `${path}${filename}`;
         if (objCache[cacheKey]) {
-            // console.log("Model retrieved from cache: ", objCache[cacheKey]);
             resolve(objCache[cacheKey].clone());
             return;
         }
@@ -25,7 +24,6 @@ export function loadGlb(path: string, filename: string): Promise<Group> {
                     const testModel = gltf.scene as Group;
                     if (testModel != null) {
                         console.log("Model loaded: ", testModel);
-                        // Cache the loaded model
                         objCache[cacheKey] = testModel;
                         resolve(testModel);
                     } else {
@@ -106,7 +104,6 @@ export function loadFbx(path: string, filename: string): Promise<Group> {
                     const testModel = object as Group;
                     if (testModel != null) {
                         console.log("Model loaded: ", testModel);
-                        // Cache the loaded model
                         objCache[cacheKey] = testModel;
                         resolve(testModel);
                     } else {

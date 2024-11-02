@@ -25,7 +25,6 @@ export function getRoadsLine(): Promise<Object3D> {
 
         const distance = playerWorldPosition.distanceTo(carGeneratorWorldPosition);
 
-        // Return immediately if the distance is greater than 20 units
         if (distance > 40) {
             setTimeout(() => {
                 generateCar(carGenerator);
@@ -75,7 +74,6 @@ export function getRoadsLine(): Promise<Object3D> {
             }
         }
 
-        // generate a cube a Math.floor(roadBlock / 2) * 2
         const cubeGeometry = new BoxGeometry(sideLength, sideLength, sideLength)
         const cubeMaterial = new MeshStandardMaterial({
             color: 'black',

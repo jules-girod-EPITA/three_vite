@@ -16,14 +16,6 @@ export function checkCollisionsCars(cars: Object3D[]) {
             car.userData.lastCollision = new Date().getTime() - 1000;
         }
 
-
-        // const helper = new Box3Helper(carBox, 0xffff00);
-        // scene.add(helper);
-        // setTimeout(() => {
-        //     scene.remove(helper);
-        // }, 10);
-
-
         if (playerBox.intersectsBox(carBox) && car.userData.lastCollision + 1000 < new Date().getTime()) {
             car.userData.lastCollision = new Date().getTime();
             player.setDeath();

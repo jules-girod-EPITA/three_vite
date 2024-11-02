@@ -1,10 +1,3 @@
-// src/buttonBehavior.ts
-
-// Function to handle button click
-
-
-
-
 import { initController } from "../controller/controller";
 
 export function handleButtonClick() {

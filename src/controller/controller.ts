@@ -14,37 +14,34 @@ export const eventListenerMouvement = (event : KeyboardEvent) => {
     if (cube.position.y != 0 || player.position.y != 0 || player.isDead())
         return;
 
-    const jumpHeight = 1.0; // Hauteur du saut
-    const moveDistance = 2; // Distance à parcourir pendant le saut
-    const duration = 0.10; // Durée totale de l'animation de saut
-    const rotationDuration = 0.5; // Durée de l'animation de rotation
+    const jumpHeight = 1.0;
+    const moveDistance = 2;
+    const duration = 0.10;
+    const rotationDuration = 0.5;
 
-    // Copie la position initiale du player
     let initialPosition = new Vector3().copy(player.position);
 
-    // Calcule la nouvelle position cible en fonction de la touche pressée
     let targetPosition = new Vector3().copy(initialPosition);
     let rotationTarget = 0;
 
 
     if (event.key === 'ArrowUp') {
-        targetPosition.z += moveDistance; // Avance
-        rotationTarget = 0; // Regarde vers l'avant
+        targetPosition.z += moveDistance;
+        rotationTarget = 0;
     }
     if (event.key === 'ArrowDown') {
-        targetPosition.z -= moveDistance; // Recule
-        rotationTarget = Math.PI; // Regarde vers l'arrière
+        targetPosition.z -= moveDistance;
+        rotationTarget = Math.PI;
     }
     if (event.key === 'ArrowLeft' && player.position.x < 10 ) {
-        targetPosition.x += moveDistance; // Déplace à gauche
-        rotationTarget = Math.PI / 2; // Regarde vers la gauche
+        targetPosition.x += moveDistance;
+        rotationTarget = Math.PI / 2;
     }
     if (event.key === 'ArrowRight' && player.position.x > -10) {
-        targetPosition.x -= moveDistance; // Déplace à droite
-        rotationTarget = -Math.PI / 2; // Regarde vers la droite
+        targetPosition.x -= moveDistance;
+        rotationTarget = -Math.PI / 2;
     }
 
-    // Animation de saut : monter puis se déplacer vers la position cible
     if (initialPosition.equals(targetPosition))
         return;
 
@@ -56,9 +53,8 @@ export const eventListenerMouvement = (event : KeyboardEvent) => {
 
     gsap.to(cube.position, {
         duration: duration,
-        y: jumpHeight, // Monter en hauteur
+        y: jumpHeight,
         onComplete: () => {
-            // Descendre et se déplacer simultanément vers la position cible
             const score = Math.max(0, Math.floor(targetPosition.z / 2));
             const currentScore = parseInt(document.getElementById("score-value").innerText);
             if (isNaN(currentScore) || score > currentScore) {

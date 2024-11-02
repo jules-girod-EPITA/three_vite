@@ -90,7 +90,6 @@ export function getGrassLine(): Promise<Object3D> {
                 console.error("An error happened while loading model:", error);
             }
         }
-        // parcours les enfants de road et mettre une rotation aléatoire
 
 
         resolve(road);
