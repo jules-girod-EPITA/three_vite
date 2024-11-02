@@ -1,88 +1,67 @@
-# three_vite
-Basic THREE.js template using [Vite](https://vitejs.dev).
+# Description du Projet
+Vous êtes un médecin qui doit se rendre à l'hopital pour sauver des vies mais pas de chance votre ambulance s'est crashée parce que le conducteur n'a vu que trop tard que le route était en travaux.
+Pour cela, vous devez traverser des routes très fréquentées. Faites attention aux voitures, aux arbres et surtout aux pierres !! 
 
-Allows testing and modifying [official THREE.js examples](https://threejs.org/examples/) locally, at lightning speed.
-After trying Parcel and Rollup, this is probably the most developer-friendly to start THREE.js development in 2023 : it's insanely fast, it supports live reload out of the box, while remaining simple to use and to extend.
+**Atteignez l'hopital pour gagner.**
 
-## Batteries included
+## Mode d'Emploi
+### Installation
+Pour utiliser ce projet, suivez les étapes ci-dessous, testé avec node 20.11.1 :
 
-Pre-configured to support :
+1. Clonez le dépôt et naviguez dans le dossier `three_vite` (racine) :
+    ```sh
+    git clone <URL_DU_DEPOT>
+    cd three_vite
+    ```
 
-- glTF file loading
-- ammo.js wasm physics library
-- VSCode launch scripts
-- THREE.js type definitions : for IntelliSense in VS Code
+2. Installez les dépendances :
+    ```sh
+    npm install
+    ```
 
-Have a look at vite.config.js and customize it to your needs (additional libraries, file formats etc.).
+3. Pour construire le projet pour la production, exécutez :
+    ```sh
+    npm run build
+    ```
 
-## Installation
+4. Pour prévisualiser le projet construit, exécutez :
+    ```sh
+    npm run preview
+    ```
 
-Install [Node.js](https://nodejs.org)
-
-- Clone or download repo
-- run `npm install` : fetches and install all dependencies
-- `npm run build` : packages all code and resources into the `dist` folder
-- `npm run dev` : launches a server and opens your browser in `https://localhost:5173` by default
-- Edit your code : your changes are reflected instantly!
-
-## HTTPS
-
-HTTPS is required to use some features such as the WebXR API
-
-
-### Using Cloudflare Tunnel for free without a domain (recommended)
-
-  - Install [Homebrew](https://brew.sh)
-
-```bash
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
-
-then follow instructions
-
-
-```bash
-echo >> /Users/XXX/.zprofile
-
-echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> /Users/XXX/.zprofile
-
-eval "$(/opt/homebrew/bin/brew shellenv)"
-```
-
-  - **[Install `cloudflared`](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/)**
-
-```bash
-brew install cloudflared
-```
-- run your app locally
-
-```bash
-npm run dev
-```
-
-- run `cloudflared` tunnel
-
-```bash
-cloudflared --url http://localhost:5173/
-```
-
-This will create a random temporary address ending in `*.trycloudflare.com`
-
-You can share this address by sending a link or by generating a QR code (very useful for mobile devices and some XR headsets).
-
-### Persistent link
-
-If you want more persistence, you should register a domain name, or connect your github account to [Cloudflare Pages](https://pages.cloudflare.com) for free.
-
-Alternatively, you could simply [use GitHub Pages to host your application persistently](https://sbcode.net/threejs/github-pages/).
-
-### Tunneling alternatives
-
-Check these tunneling alternatives such as `ngrok` or `zrok` for simple personal projects, use [tunneling solutions](https://github.com/anderspitman/awesome-tunneling) 
+5. Pour lancer l'environnement de développement, exécutez :
+    ```sh
+    npm run dev
+    ```
+   
+### Jouer
+- Utilisez les flèches directionnelles pour vous déplacer.
+- Evitez les voitures et les arbres.
+- Atteigner l'hopital pour gagner (100 de score).
+- La génération de la carte se fait uniquement au chargement de la page web.
 
 
-### Manual HTTPS setup
 
-In order to use `https`, copy your certificates to the `.cert` folder, and change the `serve` command to:
 
-`"serve": "http-server dist -S -C .cert/cert.pem -K .cert/key.pem`
+## Illustration
+### Vidéo / GIF / Screenshot
+![Exemple du projet en action](./crossy_example.gif)
+
+## Lien pour Tester l'App en Live
+[Tester l'application en live]( jules-girod-epita.github.io/three_vite/ )
+
+## Nom des Membres du Groupe
+### Répartition des Rôles
+- **kevin.tran**: Système de mouvement et de collision
+- **jules.girod**: Le reste, mais en accord avec kevin.tran étant donné que nous avions d'autres projets en parallèle.
+
+## Sources d'Inspiration
+- [Crossy Road](https://crossyroad.com/)
+- [Modèle du joueur et décoration](https://poly.pizza/bundle/Cube-World-Kit-DwDr8493Fw)
+- [Ambulance](https://poly.pizza/m/8NOFImgkI5N)
+- [Voitures](https://sketchfab.com/3d-models/low-poly-vehicle-mini-pack-8-52ee24ff6eb2479891fe68e6ce46af28)
+- [Voiture de sport](https://sketchfab.com/3d-models/racing-car-f209f3702fc04371806054e43c496c3a)
+- [Hopital](https://sketchfab.com/3d-models/low-poly-hospital-738972de7752491382457c068ab0a6ac)
+- [Ville](https://sketchfab.com/3d-models/free-low-poly-simple-urban-city-3d-asset-pack-310c806355814c3794f5e3022b38db85)
+- [Route](https://poly.pizza/bundle/Post-Apocolypse-Pack-jg0We8Clu0)
+- [Template de projet Vite](https://github.com/fdoganis/three_vite)
