@@ -1,7 +1,5 @@
-import GUI from 'lil-gui'
 import {
     AmbientLight,
-    AxesHelper,
     BoxGeometry,
     Group,
     LoadingManager,
