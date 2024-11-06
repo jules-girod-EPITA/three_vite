@@ -1,20 +1,14 @@
 import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
-import { Group } from "three";
+import { BufferGeometry, Group, Material, Mesh, Object3D } from "three";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
 
-const objCache: Record<string, Group> = {};
 
 
 export function loadGlb(path: string, filename: string): Promise<Group> {
     return new Promise((resolve, reject) => {
 
-        const cacheKey = `${path}${filename}`;
-        if (objCache[cacheKey]) {
-            resolve(objCache[cacheKey].clone());
-            return;
-        }
 
         new GLTFLoader()
             .setPath(path)
@@ -23,8 +17,7 @@ export function loadGlb(path: string, filename: string): Promise<Group> {
                 (gltf: GLTF) => {
                     const testModel = gltf.scene as Group;
                     if (testModel != null) {
-                        console.log("Model loaded: ", testModel);
-                        objCache[cacheKey] = testModel;
+                        console.log(`Model loaded ${filename}: `, testModel);
                         resolve(testModel);
                     } else {
                         console.log("Load FAILED.");
@@ -58,7 +51,7 @@ export function loadObj(path: string, filenameObj: string, filenameMtl: string):
                             (object) => {
                                 const testModel = object;
                                 if (testModel != null) {
-                                    console.log("Model loaded: ", testModel);
+                                    console.log(`Model loaded ${filenameObj}`, testModel);
                                     resolve(testModel);
                                 } else {
                                     console.log("Load FAILED.");
@@ -88,14 +81,6 @@ export function loadObj(path: string, filenameObj: string, filenameMtl: string):
 
 export function loadFbx(path: string, filename: string): Promise<Group> {
     return new Promise((resolve, reject) => {
-        const cacheKey = `${path}${filename}`;
-
-        if (objCache[cacheKey]) {
-            console.log("Model retrieved from cache: ", objCache[cacheKey]);
-            resolve(objCache[cacheKey].clone());
-            return;
-        }
-
         new FBXLoader()
             .setPath(path)
             .load(
@@ -103,8 +88,7 @@ export function loadFbx(path: string, filename: string): Promise<Group> {
                 (object) => {
                     const testModel = object as Group;
                     if (testModel != null) {
-                        console.log("Model loaded: ", testModel);
-                        objCache[cacheKey] = testModel;
+                        console.log(`Model loaded ${filename}`, testModel);
                         resolve(testModel);
                     } else {
                         console.log("Load FAILED.");
@@ -122,3 +106,29 @@ export function loadFbx(path: string, filename: string): Promise<Group> {
     });
 }
 
+function extractGeometryAndMaterialFromModel(model: Group): { geometry: BufferGeometry, material: Material | Material[] } {
+    let geometry: BufferGeometry = new BufferGeometry();
+    let material: Material | Material[] = new Material();
+    model.traverse((child : Object3D) => {
+        if (child instanceof Mesh) {
+            geometry = child.geometry.clone();
+            material = child.material;
+        }
+    });
+
+    return { geometry: geometry, material: material };
+
+}
+
+export async function extractGeometriesAndMaterialsFromFbx(path : string, fileName: string, count: number){
+    return await Promise.all(
+        Array.from({ length: count }, (_, i) => i + 1)
+    ).then(indices =>
+        Promise.all(indices.map(async (index) => {
+            const { geometry, material } = extractGeometryAndMaterialFromModel(
+                await loadFbx(path, fileName + (count !== 1 ? `${index}` : "") + ".fbx")
+            );
+            return [geometry, material];
+        }))
+    ).then(results => [results.map(([geometry]) => geometry), results.map(([, material]) => material)]);
+}

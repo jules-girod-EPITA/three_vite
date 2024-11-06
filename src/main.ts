@@ -1,13 +1,16 @@
 import {
-    AmbientLight,
-    BoxGeometry, BufferGeometry,
+    AmbientLight, Box3,
+    BoxGeometry, BoxHelper,
+    BufferGeometry,
+    Euler,
     Group,
     InstancedMesh,
-    LoadingManager, Material,
+    LoadingManager,
+    Material,
     Matrix4,
     Mesh,
     MeshBasicMaterial,
-    MeshStandardMaterial, NormalBufferAttributes,
+    MeshStandardMaterial,
     Object3D,
     PCFSoftShadowMap,
     PerspectiveCamera,
@@ -20,18 +23,21 @@ import {
 } from 'three'
 
 import Stats from 'three/examples/jsm/libs/stats.module'
-import {resizeRendererToDisplaySize} from './helpers/responsiveness'
+import { resizeRendererToDisplaySize } from './helpers/responsiveness'
 import './style.css'
-import {loadFbx, loadGlb} from "./loader/model_loader";
-import {getRoadsLine} from "./terrain/road";
-import {getGrassLine} from "./terrain/grass";
-import {handleButtonClick, handleUpArrow, initButtonBehavior} from "./components/buttonBehavior";
-import {FontLoader} from "three/examples/jsm/loaders/FontLoader";
-import {TextGeometry} from "three/examples/jsm/geometries/TextGeometry";
-import {gsap} from "gsap";
-import {eventListenerMouvement} from "./controller/controller";
-import {checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree} from "./collision/collision";
-import Geometries from "three/src/renderers/common/Geometries";
+import {
+    extractGeometriesAndMaterialsFromFbx,
+    extractGeometryAndMaterialFromModel,
+    loadFbx,
+    loadGlb
+} from "./loader/model_loader";
+import { handleButtonClick, handleUpArrow, initButtonBehavior } from "./components/buttonBehavior";
+import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
+import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
+import { gsap } from "gsap";
+import { eventListenerMouvement } from "./controller/controller";
+import { checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree } from "./collision/collision";
+import { CellType } from "./types";
 
 class Player extends Object3D {
     private onUpdate: () => void;
@@ -173,6 +179,11 @@ export let camera: PerspectiveCamera
 let stats: Stats
 let homeDecors: Object3D[] = [];
 
+const mapLength = 100;
+const mapWidth = 18;
+const map: CellType[][] = Array.from({ length: mapLength }, () => Array.from({ length: mapWidth }, () => CellType.Empty));
+
+
 
 const initialCameraPosition = new Vector3(-1, 6, -5.5);
 const initialPlayerPosition = new Vector3(0, 0, 0);
@@ -250,15 +261,15 @@ async function init() {
     // ===== 📦 OBJECTS =====
     {
 
-        let playerGeometry: any;
-        let playerMesh: any;
+        let playerGeometry: BufferGeometry;
+        let playerMesh: Material | Material[]
         player = new Player();
         try {
             cube = await loadFbx("assets/models/", "Steve.fbx");
             cube.traverse((child) => {
                 if (child instanceof Mesh) {
                     playerGeometry = child.geometry.clone();
-                    playerMesh = child.material.clone();
+                    playerMesh = child.material;
                 }
             });
 
@@ -289,7 +300,7 @@ async function init() {
             mesh.setMatrixAt(i, matrix);
         }
 
-        scene.add(mesh);
+        // scene.add(mesh);
         scene.add(player);
 
         const meshesWithoutCollision = ["Street", "Tree_1002"];
@@ -334,6 +345,236 @@ async function init() {
     }
 
 
+    let countRoads = [0];
+    let countTrees = [0, 0, 0];
+    let countDeadTrees = [0, 0, 0];
+    let countFlowers = [0, 0];
+    let countRocks = [0, 0];
+
+
+    // === 🌲 MAP ===
+    {
+        // Fill the map using random values
+        const randomMap = Array.from({ length: mapLength }, () => Array.from({ length: mapWidth }, () => Math.floor(Math.random() * 100)));
+        // [0 to 50] = road (set to -1)
+        // [50 to 100] = grass or empty
+
+        // [51 - 53.5[ = Tree
+
+        // [53.5 - 56[ = Dead tree
+        // [56 - 66[ = Flowers
+        // [66 - 68.5[ = Rock
+        // [68.5 - 100] =  empty
+        for (let z = 4; z < randomMap.length; z++) {
+            if (randomMap[z][0] <= 50) {
+                randomMap[z] = Array.from({ length: mapWidth }, () => -1);
+            }
+
+            for (let x = 0; x < randomMap[z].length; x++) {
+                if (randomMap[z][x] === -1) {
+                    map[z][x] = CellType.ROAD;
+                    countRoads[0]++;
+                } else if (randomMap[z][x] <= 50) {
+                    map[z][x] = CellType.Empty;
+                } else if (randomMap[z][x] <= 53.5) {
+                    if (randomMap[z][x] < 53.5 + 3.5 / 3) {
+                        map[z][x] = CellType.TREE_1;
+                        countTrees[0]++;
+                    } else if (randomMap[z][x] < 53.5 + (3.5 / 3) * 2) {
+                        map[z][x] = CellType.TREE_2;
+                        countTrees[1]++;
+                    } else {
+                        map[z][x] = CellType.TREE_3;
+                        countTrees[2]++;
+                    }
+                } else if (randomMap[z][x] <= 56) {
+                    if (randomMap[z][x] < 56 + 3.5 / 3) {
+                        map[z][x] = CellType.DEADTREE_1;
+                        countDeadTrees[0]++;
+                    } else if (randomMap[z][x] < 56 + (3.5 / 3) * 2) {
+                        map[z][x] = CellType.DEADTREE_2;
+                        countDeadTrees[1]++;
+                    } else {
+                        map[z][x] = CellType.DEADTREE_3;
+                        countDeadTrees[2]++;
+                    }
+                } else if (randomMap[z][x] <= 66) {
+                    if (randomMap[z][x] < 56 + 10 / 2) {
+                        map[z][x] = CellType.FLOWERS_1;
+                        countFlowers[0]++;
+                    } else {
+                        map[z][x] = CellType.FLOWERS_2;
+                        countFlowers[1]++;
+                    }
+                } else if (randomMap[z][x] <= 68.5) {
+                    if (randomMap[z][x] < 66 + 2.5 / 2) {
+                        map[z][x] = CellType.ROCK_1;
+                        countRocks[0]++;
+                    } else {
+                        map[z][x] = CellType.ROCK_2;
+                        countRocks[1]++;
+                    }
+                } else {
+                    map[z][x] = CellType.Empty;
+                }
+            }
+        }
+    }
+
+    // === 🌲 MAP INSTANCE ===
+    {
+
+        const [roadGeometry, roadMaterial] = await extractGeometriesAndMaterialsFromFbx("assets/models/streets/", "Street_Straight", countRoads.length);
+
+        const [flowerGeometries, materialGeometries] = await extractGeometriesAndMaterialsFromFbx("assets/models/props/", "Flowers_", countFlowers.length);
+        const [rockGeometries, rockMaterialGeometries] = await extractGeometriesAndMaterialsFromFbx("assets/models/props/", "Rock_", countRocks.length);
+        const [deadTreeGeometries, deadTreeMaterialGeometries] = await extractGeometriesAndMaterialsFromFbx("assets/models/props/", "DeadTree_", countDeadTrees.length);
+        const [treeGeometries, treeMaterialGeometries] = await extractGeometriesAndMaterialsFromFbx("assets/models/props/", "Tree_", countTrees.length);
+
+        const flowerInstancedMeshs = Array.from({ length: countFlowers.length }, (_, n) => new InstancedMesh(flowerGeometries[n], materialGeometries[n], countFlowers[n]));
+        const rockInstancedMeshs = Array.from({ length: countRocks.length }, (_, n) => new InstancedMesh(rockGeometries[n], rockMaterialGeometries[n], countRocks[n]));
+        const deadTreeInstancedMeshs = Array.from({ length: countDeadTrees.length }, (_, n) => new InstancedMesh(deadTreeGeometries[n], deadTreeMaterialGeometries[n], countDeadTrees[n]));
+        const roadInstancedMeshs = Array.from({ length: countRoads.length }, (_, n) => new InstancedMesh(roadGeometry[n], roadMaterial[n], countRoads[n]));
+        const treeInstancedMeshs = Array.from({ length: countTrees.length }, (_, n) => new InstancedMesh(treeGeometries[n], treeMaterialGeometries[n], countTrees[n]));
+
+        let flowerIndexes = Array.from({ length: countFlowers.length }, () => 0);
+        let rockIndexes = Array.from({ length: countRocks.length }, () => 0);
+        let deadTreeIndexes = Array.from({ length: countDeadTrees.length }, () => 0);
+        let roadIndexes = Array.from({ length: countRoads.length }, () => 0);
+        let treeIndexes = Array.from({ length: countTrees.length }, () => 0);
+
+        for (let z = 0; z < map.length; z++) {
+            for (let x = 0; x < map[z].length; x++) {
+                if (map[z][x] === CellType.ROAD) {
+                    // model.rotation.set(0, Math.PI / 2, 0);
+                    // scale 0.25
+                    const position = new Vector3(x * 2, 0, z * 2);
+                    const rotation = new Euler(0, Math.PI / 2, 0);
+                    const scale = new Vector3(0.25, 0.25, 0.25);
+                    roadInstancedMeshs[0].setMatrixAt(roadIndexes[0], new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), scale));
+                    roadIndexes[0]++;
+                } else if (map[z][x] === CellType.FLOWERS_1) {
+                    // scale 0.2
+                    const position = new Vector3(x * 2 + Math.random(), 0, z * 2 + Math.random());
+                    const rotation = new Euler(0, (Math.random() < 0.5 ? 1 : 0) * Math.PI, 0);
+                    const scale = new Vector3(0.2, 0.2, 0.2);
+                    flowerInstancedMeshs[0].setMatrixAt(flowerIndexes[0], new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), scale));
+                    flowerIndexes[0]++;
+                } else if (map[z][x] === CellType.FLOWERS_2) {
+                    // scale 0.2
+                    const position = new Vector3(x * 2 + Math.random(), 0, z * 2 + Math.random());
+                    const rotation = new Euler(0, (Math.random() < 0.5 ? 1 : 0) * Math.PI, 0);
+                    const scale = new Vector3(0.2, 0.2, 0.2);
+                    flowerInstancedMeshs[1].setMatrixAt(flowerIndexes[1], new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), scale));
+                    flowerIndexes[1]++;
+                } else if (map[z][x] === CellType.ROCK_1) {
+                    // scale 0.35
+                    const position = new Vector3(x * 2, 0, z * 2);
+                    const rotation = new Euler(0, (Math.random() < 0.5 ? 1 : 0) * Math.PI, 0);
+                    const scale = new Vector3(0.35, 0.35, 0.35);
+                    rockInstancedMeshs[0].setMatrixAt(rockIndexes[0], new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), scale));
+                    rockIndexes[0]++;
+                } else if (map[z][x] === CellType.ROCK_2) {
+                    // scale 0.35
+                    const position = new Vector3(x * 2, 0, z * 2);
+                    const rotation = new Euler(0, (Math.random() < 0.5 ? 1 : 0) * Math.PI, 0);
+                    const scale = new Vector3(0.35, 0.35, 0.35);
+                    rockInstancedMeshs[1].setMatrixAt(rockIndexes[1], new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), scale));
+                    rockIndexes[1]++;
+                } else if (map[z][x] === CellType.DEADTREE_1) {
+                    // scale 0.5
+                    const position = new Vector3(x * 2, 0, z * 2);
+                    const rotation = new Euler(0, (Math.random() < 0.5 ? 1 : 0) * Math.PI, 0);
+                    const scale = new Vector3(0.5, 0.5, 0.5);
+                    deadTreeInstancedMeshs[0].setMatrixAt(deadTreeIndexes[0], new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), scale));
+                    deadTreeIndexes[0]++;
+                } else if (map[z][x] === CellType.DEADTREE_2) {
+                    // scale 0.5
+                    const position = new Vector3(x * 2, 0, z * 2);
+                    const rotation = new Euler(0, (Math.random() < 0.5 ? 1 : 0) * Math.PI, 0);
+                    const scale = new Vector3(0.5, 0.5, 0.5);
+                    deadTreeInstancedMeshs[1].setMatrixAt(deadTreeIndexes[1], new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), scale));
+                    deadTreeIndexes[1]++;
+                } else if (map[z][x] === CellType.DEADTREE_3) {
+                    // scale 0.5
+                    const position = new Vector3(x * 2, 0, z * 2);
+                    const rotation = new Euler(0, (Math.random() < 0.5 ? 1 : 0) * Math.PI, 0);
+                    const scale = new Vector3(0.5, 0.5, 0.5);
+                    deadTreeInstancedMeshs[2].setMatrixAt(deadTreeIndexes[2], new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), scale));
+                    deadTreeIndexes[2]++;
+                }
+                else if(map[z][x] === CellType.TREE_1) {
+                    // scale 0.5
+                    const position = new Vector3(x * 2, 0, z * 2);
+                    const rotation = new Euler(0, (Math.random() < 0.5 ? 1 : 0) * Math.PI, 0);
+                    const scale = new Vector3(0.5, 0.5, 0.5);
+                    treeInstancedMeshs[0].setMatrixAt(treeIndexes[0], new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), scale));
+                    treeIndexes[0]++;
+                }
+                else if(map[z][x] === CellType.TREE_2) {
+                    // scale 0.5
+                    const position = new Vector3(x * 2, 0, z * 2);
+                    const rotation = new Euler(0, (Math.random() < 0.5 ? 1 : 0) * Math.PI, 0);
+                    const scale = new Vector3(0.5, 0.5, 0.5);
+                    treeInstancedMeshs[1].setMatrixAt(treeIndexes[1], new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), scale));
+                    treeIndexes[1]++;
+                }
+                else if(map[z][x] === CellType.TREE_3) {
+                    // scale 0.5
+                    const position = new Vector3(x * 2, 0, z * 2);
+                    const rotation = new Euler(0, (Math.random() < 0.5 ? 1 : 0) * Math.PI, 0);
+                    const scale = new Vector3(0.5, 0.5, 0.5);
+                    treeInstancedMeshs[2].setMatrixAt(treeIndexes[2], new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), scale));
+                    treeIndexes[2]++;
+                }
+            }
+        }
+
+        roadInstancedMeshs.forEach((roadInstancedMesh) => {
+            roadInstancedMesh.position.set(-mapWidth, 0, 0);
+            scene.add(roadInstancedMesh);
+        });
+
+        flowerInstancedMeshs.forEach((flowerInstancedMesh) => {
+            flowerInstancedMesh.position.set(-mapWidth, 0, 0);
+            scene.add(flowerInstancedMesh);
+        });
+
+        rockInstancedMeshs.forEach((rockInstancedMesh) => {
+            rockInstancedMesh.position.set(-mapWidth, 0, 0);
+            scene.add(rockInstancedMesh);
+        });
+
+        deadTreeInstancedMeshs.forEach((deadTreeInstancedMesh) => {
+            deadTreeInstancedMesh.position.set(-mapWidth, 0, 0);
+            scene.add(deadTreeInstancedMesh);
+        });
+
+        treeInstancedMeshs.forEach((treeInstancedMesh) => {
+            treeInstancedMesh.position.set(-mapWidth, 0, 0);
+            scene.add(treeInstancedMesh);
+        });
+
+        const trees : InstancedMesh = treeInstancedMeshs[0];
+        const dummy = new Object3D();
+        for(let i = 0; i < countTrees[0]; i++)
+        {
+            trees.getMatrixAt(i, dummy.matrix);
+            const tempMesh = new Mesh(treeGeometries[0]);
+            tempMesh.applyMatrix4(dummy.matrix);
+            tempMesh.position.x -= mapWidth;
+
+            // Create a BoxHelper for this temporary mesh
+            const boundingBoxHelper = new BoxHelper(tempMesh, 0xffff00); // Yellow color
+
+            scene.add(boundingBoxHelper);
+        }
+
+
+        // display the hitbox of the tree
+
+    }
+
     // === 📦 FBX OBJECT ===
     {
         const randomArray = Array.from({ length: 100 }, () => Math.floor(Math.random() * 100));
@@ -348,15 +589,15 @@ async function init() {
             // 0 to 50 = road
             // 51 to 100 = grass
             if (randomArray[i] <= 50) {
-                await getRoadsLine().then((road) => {
-                    road.position.set(0, 0, i * 2);
-                    scene.add(road);
-                });
+                // await getRoadsLine().then((road) => {
+                //     road.position.set(0, 0, i * 2);
+                //     scene.add(road);
+                // });
             } else {
-                await getGrassLine().then((grass) => {
-                    grass.position.set(0, 0, i * 2);
-                    scene.add(grass);
-                });
+                // await getGrassLine().then((grass) => {
+                //     grass.position.set(0, 0, i * 2);
+                //     scene.add(grass);
+                // });
             }
         }
     }
