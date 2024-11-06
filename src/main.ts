@@ -1,8 +1,8 @@
 import {
-    AmbientLight, Box3,
-    BoxGeometry, BoxHelper,
+    AmbientLight,
+    BoxGeometry,
+    BoxHelper,
     BufferGeometry,
-    Euler,
     Group,
     InstancedMesh,
     LoadingManager,
@@ -25,12 +25,7 @@ import {
 import Stats from 'three/examples/jsm/libs/stats.module'
 import { resizeRendererToDisplaySize } from './helpers/responsiveness'
 import './style.css'
-import {
-    extractGeometriesAndMaterialsFromFbx,
-    extractGeometryAndMaterialFromModel,
-    loadFbx,
-    loadGlb
-} from "./loader/model_loader";
+import { extractGeometriesAndMaterialsFromFbx, loadFbx, loadGlb } from "./loader/model_loader";
 import { handleButtonClick, handleUpArrow, initButtonBehavior } from "./components/buttonBehavior";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
@@ -38,6 +33,7 @@ import { gsap } from "gsap";
 import { eventListenerMouvement } from "./controller/controller";
 import { checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree } from "./collision/collision";
 import { CellType } from "./types";
+import { generateCellConfig, instantiateCell } from "./misc";
 
 class Player extends Object3D {
     private onUpdate: () => void;
@@ -443,90 +439,13 @@ async function init() {
         let roadIndexes = Array.from({ length: countRoads.length }, () => 0);
         let treeIndexes = Array.from({ length: countTrees.length }, () => 0);
 
+        const cellConfig = generateCellConfig(roadInstancedMeshs, roadIndexes, flowerInstancedMeshs, flowerIndexes, rockInstancedMeshs, rockIndexes, deadTreeInstancedMeshs, deadTreeIndexes, treeInstancedMeshs, treeIndexes);
+
+
+        // Main loop
         for (let z = 0; z < map.length; z++) {
-            for (let x = 0; x < map[z].length; x++) {
-                if (map[z][x] === CellType.ROAD) {
-                    // model.rotation.set(0, Math.PI / 2, 0);
-                    // scale 0.25
-                    const position = new Vector3(x * 2, 0, z * 2);
-                    const rotation = new Euler(0, Math.PI / 2, 0);
-                    const scale = new Vector3(0.25, 0.25, 0.25);
-                    roadInstancedMeshs[0].setMatrixAt(roadIndexes[0], new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), scale));
-                    roadIndexes[0]++;
-                } else if (map[z][x] === CellType.FLOWERS_1) {
-                    // scale 0.2
-                    const position = new Vector3(x * 2 + Math.random(), 0, z * 2 + Math.random());
-                    const rotation = new Euler(0, (Math.random() < 0.5 ? 1 : 0) * Math.PI, 0);
-                    const scale = new Vector3(0.2, 0.2, 0.2);
-                    flowerInstancedMeshs[0].setMatrixAt(flowerIndexes[0], new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), scale));
-                    flowerIndexes[0]++;
-                } else if (map[z][x] === CellType.FLOWERS_2) {
-                    // scale 0.2
-                    const position = new Vector3(x * 2 + Math.random(), 0, z * 2 + Math.random());
-                    const rotation = new Euler(0, (Math.random() < 0.5 ? 1 : 0) * Math.PI, 0);
-                    const scale = new Vector3(0.2, 0.2, 0.2);
-                    flowerInstancedMeshs[1].setMatrixAt(flowerIndexes[1], new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), scale));
-                    flowerIndexes[1]++;
-                } else if (map[z][x] === CellType.ROCK_1) {
-                    // scale 0.35
-                    const position = new Vector3(x * 2, 0, z * 2);
-                    const rotation = new Euler(0, (Math.random() < 0.5 ? 1 : 0) * Math.PI, 0);
-                    const scale = new Vector3(0.35, 0.35, 0.35);
-                    rockInstancedMeshs[0].setMatrixAt(rockIndexes[0], new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), scale));
-                    rockIndexes[0]++;
-                } else if (map[z][x] === CellType.ROCK_2) {
-                    // scale 0.35
-                    const position = new Vector3(x * 2, 0, z * 2);
-                    const rotation = new Euler(0, (Math.random() < 0.5 ? 1 : 0) * Math.PI, 0);
-                    const scale = new Vector3(0.35, 0.35, 0.35);
-                    rockInstancedMeshs[1].setMatrixAt(rockIndexes[1], new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), scale));
-                    rockIndexes[1]++;
-                } else if (map[z][x] === CellType.DEADTREE_1) {
-                    // scale 0.5
-                    const position = new Vector3(x * 2, 0, z * 2);
-                    const rotation = new Euler(0, (Math.random() < 0.5 ? 1 : 0) * Math.PI, 0);
-                    const scale = new Vector3(0.5, 0.5, 0.5);
-                    deadTreeInstancedMeshs[0].setMatrixAt(deadTreeIndexes[0], new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), scale));
-                    deadTreeIndexes[0]++;
-                } else if (map[z][x] === CellType.DEADTREE_2) {
-                    // scale 0.5
-                    const position = new Vector3(x * 2, 0, z * 2);
-                    const rotation = new Euler(0, (Math.random() < 0.5 ? 1 : 0) * Math.PI, 0);
-                    const scale = new Vector3(0.5, 0.5, 0.5);
-                    deadTreeInstancedMeshs[1].setMatrixAt(deadTreeIndexes[1], new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), scale));
-                    deadTreeIndexes[1]++;
-                } else if (map[z][x] === CellType.DEADTREE_3) {
-                    // scale 0.5
-                    const position = new Vector3(x * 2, 0, z * 2);
-                    const rotation = new Euler(0, (Math.random() < 0.5 ? 1 : 0) * Math.PI, 0);
-                    const scale = new Vector3(0.5, 0.5, 0.5);
-                    deadTreeInstancedMeshs[2].setMatrixAt(deadTreeIndexes[2], new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), scale));
-                    deadTreeIndexes[2]++;
-                }
-                else if(map[z][x] === CellType.TREE_1) {
-                    // scale 0.5
-                    const position = new Vector3(x * 2, 0, z * 2);
-                    const rotation = new Euler(0, (Math.random() < 0.5 ? 1 : 0) * Math.PI, 0);
-                    const scale = new Vector3(0.5, 0.5, 0.5);
-                    treeInstancedMeshs[0].setMatrixAt(treeIndexes[0], new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), scale));
-                    treeIndexes[0]++;
-                }
-                else if(map[z][x] === CellType.TREE_2) {
-                    // scale 0.5
-                    const position = new Vector3(x * 2, 0, z * 2);
-                    const rotation = new Euler(0, (Math.random() < 0.5 ? 1 : 0) * Math.PI, 0);
-                    const scale = new Vector3(0.5, 0.5, 0.5);
-                    treeInstancedMeshs[1].setMatrixAt(treeIndexes[1], new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), scale));
-                    treeIndexes[1]++;
-                }
-                else if(map[z][x] === CellType.TREE_3) {
-                    // scale 0.5
-                    const position = new Vector3(x * 2, 0, z * 2);
-                    const rotation = new Euler(0, (Math.random() < 0.5 ? 1 : 0) * Math.PI, 0);
-                    const scale = new Vector3(0.5, 0.5, 0.5);
-                    treeInstancedMeshs[2].setMatrixAt(treeIndexes[2], new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), scale));
-                    treeIndexes[2]++;
-                }
+            for (let x = 0; x < map[0].length; x++) {
+                instantiateCell(cellConfig, map[z][x], x, z);
             }
         }
 
@@ -584,20 +503,6 @@ async function init() {
         for (let i = 4; i < randomArray.length; i++) {
             if(i === highScore) {
                 addHighScoreText(scene, `Highscore ${highScore}`, 4, 0, i * 2 - 0.4);
-            }
-
-            // 0 to 50 = road
-            // 51 to 100 = grass
-            if (randomArray[i] <= 50) {
-                // await getRoadsLine().then((road) => {
-                //     road.position.set(0, 0, i * 2);
-                //     scene.add(road);
-                // });
-            } else {
-                // await getGrassLine().then((grass) => {
-                //     grass.position.set(0, 0, i * 2);
-                //     scene.add(grass);
-                // });
             }
         }
     }
@@ -773,7 +678,8 @@ async function init() {
 function animate() {
     requestAnimationFrame(animate)
 
-    stats.update()
+    if (stats)
+        stats.update()
 
     // On recupere les voitures
     let cars: Object3D[] = [];
