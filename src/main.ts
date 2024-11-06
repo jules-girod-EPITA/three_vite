@@ -1,15 +1,18 @@
 import {
     AmbientLight,
-    BoxGeometry,
+    BoxGeometry, BufferGeometry,
     Group,
-    LoadingManager,
+    InstancedMesh,
+    LoadingManager, Material,
+    Matrix4,
     Mesh,
     MeshBasicMaterial,
-    MeshStandardMaterial,
+    MeshStandardMaterial, NormalBufferAttributes,
     Object3D,
     PCFSoftShadowMap,
     PerspectiveCamera,
     PlaneGeometry,
+    Quaternion,
     Scene,
     SpotLight,
     Vector3,
@@ -17,17 +20,18 @@ import {
 } from 'three'
 
 import Stats from 'three/examples/jsm/libs/stats.module'
-import { resizeRendererToDisplaySize } from './helpers/responsiveness'
+import {resizeRendererToDisplaySize} from './helpers/responsiveness'
 import './style.css'
-import { loadFbx, loadGlb } from "./loader/model_loader";
-import { getRoadsLine } from "./terrain/road";
-import { getGrassLine } from "./terrain/grass";
-import { handleButtonClick, handleUpArrow, initButtonBehavior } from "./components/buttonBehavior";
-import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
-import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
-import { gsap } from "gsap";
-import { eventListenerMouvement } from "./controller/controller";
-import { checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree } from "./collision/collision";
+import {loadFbx, loadGlb} from "./loader/model_loader";
+import {getRoadsLine} from "./terrain/road";
+import {getGrassLine} from "./terrain/grass";
+import {handleButtonClick, handleUpArrow, initButtonBehavior} from "./components/buttonBehavior";
+import {FontLoader} from "three/examples/jsm/loaders/FontLoader";
+import {TextGeometry} from "three/examples/jsm/geometries/TextGeometry";
+import {gsap} from "gsap";
+import {eventListenerMouvement} from "./controller/controller";
+import {checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree} from "./collision/collision";
+import Geometries from "three/src/renderers/common/Geometries";
 
 class Player extends Object3D {
     private onUpdate: () => void;
@@ -246,10 +250,18 @@ async function init() {
     // ===== 📦 OBJECTS =====
     {
 
-
+        let playerGeometry: any;
+        let playerMesh: any;
         player = new Player();
         try {
             cube = await loadFbx("assets/models/", "Steve.fbx");
+            cube.traverse((child) => {
+                if (child instanceof Mesh) {
+                    playerGeometry = child.geometry.clone();
+                    playerMesh = child.material.clone();
+                }
+            });
+
             cube.scale.set(0.0035, 0.0035, 0.0035);
             cube.position.set(initialPlayerPosition.x, initialPlayerPosition.y, initialPlayerPosition.z);
         } catch (error) {
@@ -259,6 +271,25 @@ async function init() {
         player.rotation.set(initialPlayerRotation.x, initialPlayerRotation.y, initialPlayerRotation.z);
         player.add(cube);
 
+
+        const matrix = new Matrix4();
+        const mesh = new InstancedMesh(playerGeometry, playerMesh, 1000);
+
+        for (let i = 0; i < 1000; i++) {
+
+            const position = new Vector3();
+            const quaternion = new Quaternion();
+
+            position.x = Math.random() * 40 - 20;
+            position.y = 1;
+            position.z = Math.random() * 40 - 20;
+
+            matrix.compose(position, quaternion.random(), new Vector3(1, 1, 1));
+
+            mesh.setMatrixAt(i, matrix);
+        }
+
+        scene.add(mesh);
         scene.add(player);
 
         const meshesWithoutCollision = ["Street", "Tree_1002"];
