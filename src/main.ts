@@ -36,7 +36,7 @@ import { CellType } from "./types";
 import { generateCellConfig, instantiateCell } from "./misc";
 
 class Player extends Object3D {
-    private onUpdate: () => void;
+    private readonly onUpdate: () => void;
     private death: boolean = false;
     public done: boolean = false;
     private animationDone: number= 0;
@@ -189,7 +189,6 @@ export const playableArea = 9 * 2;
 
 export const sideLength = 1
 
-const animation = { enabled: true, play: true }
 
 initButtonBehavior();
 init().then(
@@ -206,7 +205,7 @@ async function addHighScoreText(scene: Scene, text: string, x: number, y: number
     const textGeometry = new TextGeometry(text, {
         font: font,
         size: 1,
-        height: 0.1,
+        depth: 0.1,
     });
 
     const textMaterial = new MeshBasicMaterial({ color: 'white' });
@@ -427,11 +426,11 @@ async function init() {
         const [deadTreeGeometries, deadTreeMaterialGeometries] = await extractGeometriesAndMaterialsFromFbx("assets/models/props/", "DeadTree_", countDeadTrees.length);
         const [treeGeometries, treeMaterialGeometries] = await extractGeometriesAndMaterialsFromFbx("assets/models/props/", "Tree_", countTrees.length);
 
-        const flowerInstancedMeshs = Array.from({ length: countFlowers.length }, (_, n) => new InstancedMesh(flowerGeometries[n], materialGeometries[n], countFlowers[n]));
-        const rockInstancedMeshs = Array.from({ length: countRocks.length }, (_, n) => new InstancedMesh(rockGeometries[n], rockMaterialGeometries[n], countRocks[n]));
-        const deadTreeInstancedMeshs = Array.from({ length: countDeadTrees.length }, (_, n) => new InstancedMesh(deadTreeGeometries[n], deadTreeMaterialGeometries[n], countDeadTrees[n]));
-        const roadInstancedMeshs = Array.from({ length: countRoads.length }, (_, n) => new InstancedMesh(roadGeometry[n], roadMaterial[n], countRoads[n]));
-        const treeInstancedMeshs = Array.from({ length: countTrees.length }, (_, n) => new InstancedMesh(treeGeometries[n], treeMaterialGeometries[n], countTrees[n]));
+        const flowerInstancedMeshes = Array.from({ length: countFlowers.length }, (_, n) => new InstancedMesh(flowerGeometries[n], materialGeometries[n], countFlowers[n]));
+        const rockInstancedMeshes = Array.from({ length: countRocks.length }, (_, n) => new InstancedMesh(rockGeometries[n], rockMaterialGeometries[n], countRocks[n]));
+        const deadTreeInstancedMeshes = Array.from({ length: countDeadTrees.length }, (_, n) => new InstancedMesh(deadTreeGeometries[n], deadTreeMaterialGeometries[n], countDeadTrees[n]));
+        const roadInstancedMeshes = Array.from({ length: countRoads.length }, (_, n) => new InstancedMesh(roadGeometry[n], roadMaterial[n], countRoads[n]));
+        const treeInstancedMeshes = Array.from({ length: countTrees.length }, (_, n) => new InstancedMesh(treeGeometries[n], treeMaterialGeometries[n], countTrees[n]));
 
         let flowerIndexes = Array.from({ length: countFlowers.length }, () => 0);
         let rockIndexes = Array.from({ length: countRocks.length }, () => 0);
@@ -439,7 +438,7 @@ async function init() {
         let roadIndexes = Array.from({ length: countRoads.length }, () => 0);
         let treeIndexes = Array.from({ length: countTrees.length }, () => 0);
 
-        const cellConfig = generateCellConfig(roadInstancedMeshs, roadIndexes, flowerInstancedMeshs, flowerIndexes, rockInstancedMeshs, rockIndexes, deadTreeInstancedMeshs, deadTreeIndexes, treeInstancedMeshs, treeIndexes);
+        const cellConfig = generateCellConfig(roadInstancedMeshes, roadIndexes, flowerInstancedMeshes, flowerIndexes, rockInstancedMeshes, rockIndexes, deadTreeInstancedMeshes, deadTreeIndexes, treeInstancedMeshes, treeIndexes);
 
 
         // Main loop
@@ -449,32 +448,32 @@ async function init() {
             }
         }
 
-        roadInstancedMeshs.forEach((roadInstancedMesh) => {
+        roadInstancedMeshes.forEach((roadInstancedMesh) => {
             roadInstancedMesh.position.set(-mapWidth, 0, 0);
             scene.add(roadInstancedMesh);
         });
 
-        flowerInstancedMeshs.forEach((flowerInstancedMesh) => {
+        flowerInstancedMeshes.forEach((flowerInstancedMesh) => {
             flowerInstancedMesh.position.set(-mapWidth, 0, 0);
             scene.add(flowerInstancedMesh);
         });
 
-        rockInstancedMeshs.forEach((rockInstancedMesh) => {
+        rockInstancedMeshes.forEach((rockInstancedMesh) => {
             rockInstancedMesh.position.set(-mapWidth, 0, 0);
             scene.add(rockInstancedMesh);
         });
 
-        deadTreeInstancedMeshs.forEach((deadTreeInstancedMesh) => {
+        deadTreeInstancedMeshes.forEach((deadTreeInstancedMesh) => {
             deadTreeInstancedMesh.position.set(-mapWidth, 0, 0);
             scene.add(deadTreeInstancedMesh);
         });
 
-        treeInstancedMeshs.forEach((treeInstancedMesh) => {
+        treeInstancedMeshes.forEach((treeInstancedMesh) => {
             treeInstancedMesh.position.set(-mapWidth, 0, 0);
             scene.add(treeInstancedMesh);
         });
 
-        const trees : InstancedMesh = treeInstancedMeshs[0];
+        const trees : InstancedMesh = treeInstancedMeshes[0];
         const dummy = new Object3D();
         for(let i = 0; i < countTrees[0]; i++)
         {
@@ -502,7 +501,7 @@ async function init() {
 
         for (let i = 4; i < randomArray.length; i++) {
             if(i === highScore) {
-                addHighScoreText(scene, `Highscore ${highScore}`, 4, 0, i * 2 - 0.4);
+                await addHighScoreText(scene, `Highscore ${highScore}`, 4, 0, i * 2 - 0.4);
             }
         }
     }
@@ -518,7 +517,7 @@ async function init() {
         })
         const skybox = new Mesh(skyboxGeometry, skyboxMaterial);
         skybox.position.z = skyboxGeometry.parameters.depth / 2 - 26
-        skybox.material.emissive.set('skyblue')
+        skybox.material.emissive.set('skyblue' as any);
         scene.add(skybox)
 
 
