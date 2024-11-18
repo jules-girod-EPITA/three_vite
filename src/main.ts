@@ -185,6 +185,9 @@ const initialCameraPosition = new Vector3(-1, 6, -5.5);
 const initialPlayerPosition = new Vector3(0, 0, 0);
 const initialPlayerRotation = new Vector3(0, 0, 0);
 
+let trees: Object3D[] = [];
+let rocks: Object3D[] = [];
+
 export const playableArea = 9 * 2;
 
 export const sideLength = 1
@@ -473,20 +476,33 @@ async function init() {
             scene.add(treeInstancedMesh);
         });
 
-        const trees : InstancedMesh = treeInstancedMeshes[0];
-        const dummy = new Object3D();
-        for(let i = 0; i < countTrees[0]; i++)
-        {
-            trees.getMatrixAt(i, dummy.matrix);
-            const tempMesh = new Mesh(treeGeometries[0]);
-            tempMesh.applyMatrix4(dummy.matrix);
-            tempMesh.position.x -= mapWidth;
 
-            // Create a BoxHelper for this temporary mesh
-            const boundingBoxHelper = new BoxHelper(tempMesh, 0xffff00); // Yellow color
+        function addCollision(geometries: typeof treeGeometries, meshes: typeof treeInstancedMeshes, countDiffElement: number[], isTree: boolean) {
+            const dummy = new Object3D();
+            for (let i = 0; i < countDiffElement.length; i++) {
+                for (let j = 0; j < countDiffElement[i]; j++) {
+                    meshes[i].getMatrixAt(j, dummy.matrix);
+                    const tempMesh = new Mesh(geometries[i]);
+                    tempMesh.applyMatrix4(dummy.matrix);
+                    tempMesh.position.x -= mapWidth;
 
-            scene.add(boundingBoxHelper);
+                    // Create a BoxHelper for this temporary mesh
+                    const boundingBoxHelper = new BoxHelper(tempMesh, 0xffff00); // Yellow color
+
+                    if (isTree)
+                        trees.push(tempMesh as Object3D);
+                    else
+                        rocks.push(tempMesh as Object3D);
+
+                    scene.add(boundingBoxHelper);
+                }
+            }
         }
+
+        addCollision(treeGeometries, treeInstancedMeshes, countTrees, true);
+        addCollision(deadTreeGeometries, deadTreeInstancedMeshes, countDeadTrees, true);
+        addCollision(rockGeometries, rockInstancedMeshes, countRocks, false);
+
 
 
         // display the hitbox of the tree
@@ -682,17 +698,15 @@ function animate() {
 
     // On recupere les voitures
     let cars: Object3D[] = [];
-    let trees: Object3D[] = [];
-    let rocks: Object3D[] = [];
 
     scene.traverse((child) => {
 
         if (child instanceof Group && child.name === "car") {
             cars.push(child as Object3D);
         }
-        if (child instanceof Group && child.name === "tree" || child.name === "dead_tree") {
-            trees.push(child as Object3D);
-        }
+        // if (child instanceof Group && child.name === "tree" || child.name === "dead_tree") {
+        //     trees.push(child as Object3D);
+        // }
         if (child instanceof Group && child.name === "rock") {
             rocks.push(child as Object3D);
         }
