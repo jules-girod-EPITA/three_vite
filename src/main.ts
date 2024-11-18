@@ -187,6 +187,7 @@ const initialPlayerRotation = new Vector3(0, 0, 0);
 
 let trees: Object3D[] = [];
 let rocks: Object3D[] = [];
+let carSpawnPoint: Vector3[] = [];
 
 export const playableArea = 9 * 2;
 
@@ -423,7 +424,6 @@ async function init() {
     {
 
         const [roadGeometry, roadMaterial] = await extractGeometriesAndMaterialsFromFbx("assets/models/streets/", "Street_Straight", countRoads.length);
-
         const [flowerGeometries, materialGeometries] = await extractGeometriesAndMaterialsFromFbx("assets/models/props/", "Flowers_", countFlowers.length);
         const [rockGeometries, rockMaterialGeometries] = await extractGeometriesAndMaterialsFromFbx("assets/models/props/", "Rock_", countRocks.length);
         const [deadTreeGeometries, deadTreeMaterialGeometries] = await extractGeometriesAndMaterialsFromFbx("assets/models/props/", "DeadTree_", countDeadTrees.length);
@@ -451,30 +451,18 @@ async function init() {
             }
         }
 
-        roadInstancedMeshes.forEach((roadInstancedMesh) => {
-            roadInstancedMesh.position.set(-mapWidth, 0, 0);
-            scene.add(roadInstancedMesh);
-        });
+        function addInstancedMeshToScene(instancedMeshes: InstancedMesh[]) {
+            instancedMeshes.forEach((instancedMesh) => {
+                instancedMesh.position.set(-mapWidth, 0, 0);
+                scene.add(instancedMesh);
+            });
+        }
 
-        flowerInstancedMeshes.forEach((flowerInstancedMesh) => {
-            flowerInstancedMesh.position.set(-mapWidth, 0, 0);
-            scene.add(flowerInstancedMesh);
-        });
-
-        rockInstancedMeshes.forEach((rockInstancedMesh) => {
-            rockInstancedMesh.position.set(-mapWidth, 0, 0);
-            scene.add(rockInstancedMesh);
-        });
-
-        deadTreeInstancedMeshes.forEach((deadTreeInstancedMesh) => {
-            deadTreeInstancedMesh.position.set(-mapWidth, 0, 0);
-            scene.add(deadTreeInstancedMesh);
-        });
-
-        treeInstancedMeshes.forEach((treeInstancedMesh) => {
-            treeInstancedMesh.position.set(-mapWidth, 0, 0);
-            scene.add(treeInstancedMesh);
-        });
+        addInstancedMeshToScene(roadInstancedMeshes);
+        addInstancedMeshToScene(flowerInstancedMeshes);
+        addInstancedMeshToScene(rockInstancedMeshes);
+        addInstancedMeshToScene(deadTreeInstancedMeshes);
+        addInstancedMeshToScene(treeInstancedMeshes);
 
 
         function addCollision(geometries: typeof treeGeometries, meshes: typeof treeInstancedMeshes, countDiffElement: number[], isTree: boolean) {
@@ -504,8 +492,18 @@ async function init() {
         addCollision(rockGeometries, rockInstancedMeshes, countRocks, false);
 
 
+        for (let z = 0; z < map.length; z++) {
+            if (map[z][0] === CellType.ROAD) {
+                const tempMesh = new Mesh(roadGeometry[0]);
+                tempMesh.position.z = z * 2;
+                tempMesh.position.x += mapWidth - 2;
+                tempMesh.scale.set(0.25, 0.25, 0.25);
+                const boundingBoxHelper = new BoxHelper(tempMesh, 'red');
 
-        // display the hitbox of the tree
+                scene.add(boundingBoxHelper);
+            }
+        }
+
 
     }
 
@@ -707,9 +705,9 @@ function animate() {
         // if (child instanceof Group && child.name === "tree" || child.name === "dead_tree") {
         //     trees.push(child as Object3D);
         // }
-        if (child instanceof Group && child.name === "rock") {
-            rocks.push(child as Object3D);
-        }
+        // if (child instanceof Group && child.name === "rock") {
+        //     rocks.push(child as Object3D);
+        // }
     });
 
     checkCollisionsCars(cars);
