@@ -34,6 +34,7 @@ import { eventListenerMouvement } from "./controller/controller";
 import { checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree } from "./collision/collision";
 import { CellType } from "./types";
 import { generateCellConfig, instantiateCell } from "./misc";
+import { generateCar } from "./terrain/road";
 
 class Player extends Object3D {
     private readonly onUpdate: () => void;
@@ -494,15 +495,19 @@ async function init() {
 
         for (let z = 0; z < map.length; z++) {
             if (map[z][0] === CellType.ROAD) {
-                const tempMesh = new Mesh(roadGeometry[0]);
-                tempMesh.position.z = z * 2;
-                tempMesh.position.x += mapWidth - 2;
-                tempMesh.scale.set(0.25, 0.25, 0.25);
-                const boundingBoxHelper = new BoxHelper(tempMesh, 'red');
+                carSpawnPoint.push(new Vector3(mapWidth - 2, 0, z * 2));
 
-                scene.add(boundingBoxHelper);
+
             }
         }
+        // generate a cube at all the spawn point
+        carSpawnPoint.forEach((spawnPoint) => {
+            const cube = new Mesh(new BoxGeometry(1, 1, 1), new MeshStandardMaterial({ color: 'red' }));
+            cube.position.set(spawnPoint.x, spawnPoint.y, spawnPoint.z);
+            scene.add(cube);
+            generateCar(cube);
+        });
+
 
 
     }

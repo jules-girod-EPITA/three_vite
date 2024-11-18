@@ -1,6 +1,6 @@
-import { BoxGeometry, Mesh, MeshStandardMaterial, Object3D, Vector3 } from "three";
-import { loadFbx, loadGlb } from "../loader/model_loader";
-import { playableArea, player, sideLength } from "../main";
+import { Object3D, Vector3 } from "three";
+import { loadGlb } from "../loader/model_loader";
+import { player } from "../main";
 import { gsap } from "gsap";
 
 
@@ -12,10 +12,10 @@ const cars: { model: string, speed: number, scale: number }[] = [
     { model: "model5.glb", speed: 1, scale: 0.5 },
     { model: "model6.glb", speed: 6, scale: 1 }];
 
-export function getRoadsLine(): Promise<Object3D> {
+export function generateCar(carGenerator: Object3D): Promise<Object3D> {
     const random = Math.floor(Math.random() * cars.length);
 
-    async function generateCar(carGenerator: Object3D) {
+    async function innerGenerateCar(carGenerator: Object3D) {
 
         const playerWorldPosition = new Vector3();
         const carGeneratorWorldPosition = new Vector3();
@@ -27,7 +27,7 @@ export function getRoadsLine(): Promise<Object3D> {
 
         if (distance > 40) {
             setTimeout(() => {
-                generateCar(carGenerator);
+                innerGenerateCar(carGenerator);
             }, 2000);
             return;
         }
@@ -49,7 +49,7 @@ export function getRoadsLine(): Promise<Object3D> {
             x: -carGenerator.position.x * 2,
             onComplete: () => {
                 carGenerator.remove(car);
-                generateCar(carGenerator);
+                innerGenerateCar(carGenerator);
             }
         });
 
@@ -58,38 +58,11 @@ export function getRoadsLine(): Promise<Object3D> {
     }
 
 
-    return new Promise<Object3D>(async (resolve) => {
-        const road: Object3D = new Object3D();
-        const COEF_SCALE = 0.25;
-
-        for (let i = -Math.floor(playableArea / 2); i < Math.ceil(playableArea / 2); i++) {
-            try {
-                const model = await loadFbx("assets/models/streets/", "Street_Straight.fbx");
-                model.position.set(i * 2, 0, 0);
-                model.rotation.set(0, Math.PI / 2, 0);
-                model.scale.set(sideLength * COEF_SCALE, sideLength * COEF_SCALE, sideLength * COEF_SCALE);
-                road.add(model);
-            } catch (error) {
-                console.error("An error happened while loading model:", error);
-            }
-        }
-
-        const cubeGeometry = new BoxGeometry(sideLength, sideLength, sideLength)
-        const cubeMaterial = new MeshStandardMaterial({
-            color: 'black',
-            metalness: 0.5,
-            roughness: 0.7,
-        })
-        const carGenerator = new Mesh(cubeGeometry, cubeMaterial)
-        carGenerator.castShadow = true
-        carGenerator.position.y = 0
-        carGenerator.position.x = Math.floor(playableArea / 2) * 2
-        road.add(carGenerator)
-
+    return new Promise(async (resolve) => {
         setTimeout(() => {
-            generateCar(carGenerator);
+            innerGenerateCar(carGenerator);
         }, Math.round(Math.random() * 2000) + 1000);
 
-        resolve(road);
+        resolve();
     })
 }
