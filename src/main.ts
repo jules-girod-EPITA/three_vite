@@ -3,6 +3,7 @@ import {
     BoxGeometry,
     BoxHelper,
     BufferGeometry,
+    Euler,
     Group,
     InstancedMesh,
     LoadingManager,
@@ -25,7 +26,12 @@ import {
 import Stats from 'three/examples/jsm/libs/stats.module'
 import { resizeRendererToDisplaySize } from './helpers/responsiveness'
 import './style.css'
-import { extractGeometriesAndMaterialsFromFbx, loadFbx, loadGlb } from "./loader/model_loader";
+import {
+    extractGeometriesAndMaterialsFromFbx,
+    extractGeometriesAndMaterialsFromGlb,
+    loadFbx,
+    loadGlb
+} from "./loader/model_loader";
 import { handleButtonClick, handleUpArrow, initButtonBehavior } from "./components/buttonBehavior";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
@@ -34,7 +40,6 @@ import { eventListenerMouvement } from "./controller/controller";
 import { checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree } from "./collision/collision";
 import { CellType } from "./types";
 import { generateCellConfig, instantiateCell } from "./misc";
-import { generateCar } from "./terrain/road";
 
 class Player extends Object3D {
     private readonly onUpdate: () => void;
@@ -177,7 +182,7 @@ let stats: Stats
 let homeDecors: Object3D[] = [];
 
 const mapLength = 100;
-const mapWidth = 18;
+export const mapWidth = 18;
 const map: CellType[][] = Array.from({ length: mapLength }, () => Array.from({ length: mapWidth }, () => CellType.Empty));
 
 
@@ -496,20 +501,35 @@ async function init() {
         for (let z = 0; z < map.length; z++) {
             if (map[z][0] === CellType.ROAD) {
                 carSpawnPoint.push(new Vector3(mapWidth - 2, 0, z * 2));
-
-
             }
         }
-        // generate a cube at all the spawn point
-        carSpawnPoint.forEach((spawnPoint) => {
-            const cube = new Mesh(new BoxGeometry(1, 1, 1), new MeshStandardMaterial({ color: 'red' }));
-            cube.position.set(spawnPoint.x, spawnPoint.y, spawnPoint.z);
-            scene.add(cube);
-            generateCar(cube);
+
+
+        // const cube = new Mesh(new BoxGeometry(1, 1, 1), new MeshStandardMaterial({ color: 'red' }));
+        // cube.position.set(spawnPoint.x, spawnPoint.y, spawnPoint.z);
+        // scene.add(cube);
+        // generateCar(cube);
+
+
+        let countCars = [1, 1, 1, 1, 1];
+
+        const [carGeometry, carMaterial] = await extractGeometriesAndMaterialsFromGlb("assets/models/cars/", "model", countCars.length);
+        const carInstancedMeshes = Array.from({ length: countCars.length }, (_, n) => new InstancedMesh(carGeometry[n], carMaterial[n], countCars[n]));
+
+        for (let i = 0; i < carGeometry.length; i++) {
+            for (let j = 0; j < countCars[i]; j++) {
+                const position = new Vector3(mapWidth - 2, 0, 2 * i);
+                const rotation = new Euler(-Math.PI / 2, 0, -Math.PI / 2);
+                const scale = 0.5;
+                carInstancedMeshes[i].setMatrixAt(j, new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), new Vector3(scale, scale, scale)));
+                // animateCarInstance(carInstancedMeshes[i], j);
+            }
+        }
+
+        carInstancedMeshes.forEach((instancedMesh) => {
+            instancedMesh.position.set(0, 0.1, 0);
+            scene.add(instancedMesh);
         });
-
-
-
     }
 
     // === 📦 FBX OBJECT ===

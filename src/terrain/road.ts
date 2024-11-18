@@ -1,6 +1,6 @@
-import { Object3D, Vector3 } from "three";
+import { InstancedMesh, Matrix4, Object3D, Quaternion, Vector3 } from "three";
 import { loadGlb } from "../loader/model_loader";
-import { player } from "../main";
+import { mapWidth, player } from "../main";
 import { gsap } from "gsap";
 
 
@@ -65,4 +65,36 @@ export function generateCar(carGenerator: Object3D): Promise<Object3D> {
 
         resolve();
     })
+}
+
+export function animateCarInstance(carMesh: InstancedMesh, index: number, translation: Vector3 = new Vector3(-(mapWidth - 1) * 2, 0, 0)) {
+    function doAnimation() {
+        const dummyObject = new Object3D();
+        const start = new Vector3();
+
+        const instanceMatrix = new Matrix4();
+        carMesh.getMatrixAt(index, instanceMatrix);
+        instanceMatrix.decompose(start, new Quaternion(), new Vector3());
+        gsap.to(start, {
+            x: translation.x + start.x,
+            y: translation.y + start.y,
+            z: translation.z + start.z,
+            duration: 2,
+            onUpdate: () => {
+                dummyObject.position.copy(start);
+                dummyObject.updateMatrix();
+                carMesh.setMatrixAt(index, dummyObject.matrix);
+                carMesh.instanceMatrix.needsUpdate = true;
+            },
+            onComplete: () => {
+                instanceMatrix.setPosition(mapWidth - 2, 0, index * 2);
+                carMesh.setMatrixAt(index, instanceMatrix);
+                carMesh.instanceMatrix.needsUpdate = true;
+                doAnimation();
+            }
+        });
+    }
+
+    doAnimation()
+
 }

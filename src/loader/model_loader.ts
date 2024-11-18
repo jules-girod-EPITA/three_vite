@@ -4,8 +4,6 @@ import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
 import { BufferGeometry, Group, Material, Mesh, Object3D } from "three";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
 
-
-
 export function loadGlb(path: string, filename: string): Promise<Group> {
     return new Promise((resolve, reject) => {
 
@@ -106,7 +104,10 @@ export function loadFbx(path: string, filename: string): Promise<Group> {
     });
 }
 
-function extractGeometryAndMaterialFromModel(model: Group): { geometry: BufferGeometry, material: Material | Material[] } {
+export function extractGeometryAndMaterialFromModel(model: Group): {
+    geometry: BufferGeometry,
+    material: Material | Material[]
+} {
     let geometry: BufferGeometry = new BufferGeometry();
     let material: Material | Material[] = new Material();
     model.traverse((child : Object3D) => {
@@ -127,6 +128,19 @@ export async function extractGeometriesAndMaterialsFromFbx(path : string, fileNa
         Promise.all(indices.map(async (index) => {
             const { geometry, material } = extractGeometryAndMaterialFromModel(
                 await loadFbx(path, fileName + (count !== 1 ? `${index}` : "") + ".fbx")
+            );
+            return [geometry, material];
+        }))
+    ).then(results => [results.map(([geometry]) => geometry), results.map(([, material]) => material)]);
+}
+
+export async function extractGeometriesAndMaterialsFromGlb(path: string, fileName: string, count: number) {
+    return await Promise.all(
+        Array.from({ length: count }, (_, i) => i + 1)
+    ).then(indices =>
+        Promise.all(indices.map(async (index) => {
+            const { geometry, material } = extractGeometryAndMaterialFromModel(
+                await loadGlb(path, fileName + (count !== 1 ? `${index}` : "") + ".glb")
             );
             return [geometry, material];
         }))
