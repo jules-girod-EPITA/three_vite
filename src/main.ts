@@ -40,6 +40,7 @@ import { eventListenerMouvement } from "./controller/controller";
 import { checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree } from "./collision/collision";
 import { CellType } from "./types";
 import { generateCellConfig, instantiateCell } from "./misc";
+import { animateCarInstance } from "./terrain/road";
 
 class Player extends Object3D {
     private readonly onUpdate: () => void;
@@ -505,26 +506,35 @@ async function init() {
         }
 
 
-        // const cube = new Mesh(new BoxGeometry(1, 1, 1), new MeshStandardMaterial({ color: 'red' }));
-        // cube.position.set(spawnPoint.x, spawnPoint.y, spawnPoint.z);
-        // scene.add(cube);
-        // generateCar(cube);
+        for (let i = 0; i < carSpawnPoint.length; i++) {
+            const cube = new Mesh(new BoxGeometry(1, 1, 1), new MeshStandardMaterial({ color: 'red' }));
+            cube.position.set(carSpawnPoint[i].x, carSpawnPoint[i].y, carSpawnPoint[i].z);
+            scene.add(cube);
+        }
 
+        const nbModelCars = 5;
+        const carModelsByIndex = Array.from({ length: carSpawnPoint.length }, (_, n) => Math.floor(Math.random() * nbModelCars));
 
-        let countCars = [1, 1, 1, 1, 1];
+        let countCars : number[] = carModelsByIndex.reduce((acc, value) => {
+            acc[value]++;
+            return acc;
+        }, Array.from({ length: nbModelCars }, () => 0));
 
         const [carGeometry, carMaterial] = await extractGeometriesAndMaterialsFromGlb("assets/models/cars/", "model", countCars.length);
         const carInstancedMeshes = Array.from({ length: countCars.length }, (_, n) => new InstancedMesh(carGeometry[n], carMaterial[n], countCars[n]));
 
-        for (let i = 0; i < carGeometry.length; i++) {
-            for (let j = 0; j < countCars[i]; j++) {
-                const position = new Vector3(mapWidth - 2, 0, 2 * i);
-                const rotation = new Euler(-Math.PI / 2, 0, -Math.PI / 2);
-                const scale = 0.5;
-                carInstancedMeshes[i].setMatrixAt(j, new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), new Vector3(scale, scale, scale)));
-                // animateCarInstance(carInstancedMeshes[i], j);
-            }
-        }
+
+        let countCurCarsInstanced = Array.from({ length: countCars.length }, () => 0);
+        carModelsByIndex.forEach((value, i) =>
+        {
+            const position = carSpawnPoint[i];
+            const rotation = new Euler(-Math.PI / 2, 0, -Math.PI / 2);
+            const scale = 0.5;
+            const count = countCurCarsInstanced[value];
+            carInstancedMeshes[value].setMatrixAt(count, new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), new Vector3(scale, scale, scale)));
+            countCurCarsInstanced[value]++;
+            animateCarInstance(carInstancedMeshes[value], count, carSpawnPoint[i], carGeometry[value], value);
+        });
 
         carInstancedMeshes.forEach((instancedMesh) => {
             instancedMesh.position.set(0, 0.1, 0);
@@ -619,7 +629,7 @@ async function init() {
     // ===== 📈 STATS & CLOCK =====
     {
         stats = new Stats()
-        // document.body.appendChild(stats.dom)
+        document.body.appendChild(stats.dom)
     }
 
     // // ==== 🐞 DEBUG GUI ====
