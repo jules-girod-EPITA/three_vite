@@ -1,7 +1,8 @@
-import { BoxGeometry, Mesh, MeshStandardMaterial, Object3D, Vector3 } from "three";
-import { loadFbx, loadGlb } from "../loader/model_loader";
-import { playableArea, player, sideLength } from "../main";
+import { Box3, BufferGeometry, InstancedMesh, Matrix4, Mesh, Object3D, Quaternion, Vector3 } from "three";
+import { loadGlb } from "../loader/model_loader";
+import { cube, mapWidth, player } from "../main";
 import { gsap } from "gsap";
+import { distance } from "three/src/nodes/math/MathNode";
 
 
 const cars: { model: string, speed: number, scale: number }[] = [
@@ -12,10 +13,10 @@ const cars: { model: string, speed: number, scale: number }[] = [
     { model: "model5.glb", speed: 1, scale: 0.5 },
     { model: "model6.glb", speed: 6, scale: 1 }];
 
-export function getRoadsLine(): Promise<Object3D> {
+export function generateCar(carGenerator: Object3D): Promise<Object3D> {
     const random = Math.floor(Math.random() * cars.length);
 
-    async function generateCar(carGenerator: Object3D) {
+    async function innerGenerateCar(carGenerator: Object3D) {
 
         const playerWorldPosition = new Vector3();
         const carGeneratorWorldPosition = new Vector3();
@@ -27,7 +28,7 @@ export function getRoadsLine(): Promise<Object3D> {
 
         if (distance > 40) {
             setTimeout(() => {
-                generateCar(carGenerator);
+                innerGenerateCar(carGenerator);
             }, 2000);
             return;
         }
@@ -49,7 +50,7 @@ export function getRoadsLine(): Promise<Object3D> {
             x: -carGenerator.position.x * 2,
             onComplete: () => {
                 carGenerator.remove(car);
-                generateCar(carGenerator);
+                innerGenerateCar(carGenerator);
             }
         });
 
@@ -58,38 +59,113 @@ export function getRoadsLine(): Promise<Object3D> {
     }
 
 
-    return new Promise<Object3D>(async (resolve) => {
-        const road: Object3D = new Object3D();
-        const COEF_SCALE = 0.25;
-
-        for (let i = -Math.floor(playableArea / 2); i < Math.ceil(playableArea / 2); i++) {
-            try {
-                const model = await loadFbx("assets/models/streets/", "Street_Straight.fbx");
-                model.position.set(i * 2, 0, 0);
-                model.rotation.set(0, Math.PI / 2, 0);
-                model.scale.set(sideLength * COEF_SCALE, sideLength * COEF_SCALE, sideLength * COEF_SCALE);
-                road.add(model);
-            } catch (error) {
-                console.error("An error happened while loading model:", error);
-            }
-        }
-
-        const cubeGeometry = new BoxGeometry(sideLength, sideLength, sideLength)
-        const cubeMaterial = new MeshStandardMaterial({
-            color: 'black',
-            metalness: 0.5,
-            roughness: 0.7,
-        })
-        const carGenerator = new Mesh(cubeGeometry, cubeMaterial)
-        carGenerator.castShadow = true
-        carGenerator.position.y = 0
-        carGenerator.position.x = Math.floor(playableArea / 2) * 2
-        road.add(carGenerator)
-
+    return new Promise(async (resolve) => {
         setTimeout(() => {
-            generateCar(carGenerator);
+            innerGenerateCar(carGenerator);
         }, Math.round(Math.random() * 2000) + 1000);
 
-        resolve(road);
+        resolve();
     })
+}
+
+export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnPoint: Vector3, carGeometry: BufferGeometry, carModelIndex: number, translation: Vector3 = new Vector3(-(mapWidth - 1) * 2, 0, 0)) {
+    function doAnimation() {
+        const dummyObject = new Object3D();
+        const curPos = new Vector3();
+        const rotation = new Quaternion();
+        const scale = new Vector3();
+
+        const instanceMatrix = new Matrix4();
+        carMesh.getMatrixAt(index, instanceMatrix);
+        instanceMatrix.decompose(curPos, rotation, scale);
+        const duration = 8 / cars[carModelIndex].speed;
+        gsap.to(curPos, {
+            x: translation.x + curPos.x,
+            y: translation.y + curPos.y,
+            z: translation.z + curPos.z,
+            duration: duration,
+            "ease": "none",
+            onUpdate: () => {
+                dummyObject.position.copy(curPos);
+                dummyObject.quaternion.copy(rotation);
+                dummyObject.scale.copy(scale);
+                dummyObject.updateMatrix();
+                carMesh.setMatrixAt(index, dummyObject.matrix);
+                carMesh.instanceMatrix.needsUpdate = true;
+
+                const playerWorldPosition = new Vector3();
+                const carGeneratorWorldPosition = new Vector3();
+
+                player.getWorldPosition(playerWorldPosition);
+                dummyObject.getWorldPosition(carGeneratorWorldPosition);
+
+                if(playerWorldPosition.distanceTo(carGeneratorWorldPosition) > 10)
+                    return;
+
+                const playerBox = new Box3().setFromObject(player);
+
+                const tempMesh = new Mesh(carGeometry);
+                tempMesh.applyMatrix4(dummyObject.matrix);
+
+
+                if (!dummyObject.userData.lastCollision) {
+                    dummyObject.userData.lastCollision = new Date().getTime() - 1000;
+                }
+
+                const carBox = new Box3().setFromObject(tempMesh);
+
+                if (playerBox.intersectsBox(carBox) && dummyObject.userData.lastCollision + 1000 < new Date().getTime()) {
+                    dummyObject.userData.lastCollision = new Date().getTime();
+                    player.setDeath();
+                    gsap.to(cube.rotation, {
+                        duration: 1,
+                        x: Math.PI * 2 * 8,
+                        y: Math.PI * 2 * 8,
+                        z: Math.PI * 2 * 8
+                    });
+
+                    const left = carBox.getCenter(new Vector3()).x > playerBox.getCenter(new Vector3()).x;
+
+                    gsap.to(cube.rotation, {
+                        duration: 1,
+                        x: Math.random() < 0.5 ? Math.PI / 2 : 3 * Math.PI / 2,
+                        y: 0,
+                        z: Math.random() * Math.PI * 2 * 8
+                    });
+
+                    const originalPosition = new Vector3().copy(player.position);
+                    gsap.to(player.position, {
+                        duration: 0.5,
+                        x: originalPosition.x + (cars[carModelIndex].speed * (left ? -1 : 1)),
+                        y: originalPosition.y + 1,
+                        ease: "none",
+                        onComplete: () => {
+                            gsap.to(player.position, {
+                                duration: 0.5,
+                                x: originalPosition.x + (cars[carModelIndex].speed * (left ? -1.25 : 1.25)),
+                                y: 0,
+                                ease: "none",
+                            })
+                        }
+                    });
+                }
+            },
+            onComplete: () => {
+                instanceMatrix.setPosition(spawnPoint);
+                carMesh.setMatrixAt(index, instanceMatrix);
+                carMesh.instanceMatrix.needsUpdate = true;
+                doAnimation();
+            }
+        });
+    }
+
+    return new Promise(async (resolve) => {
+        setTimeout(() => {
+            doAnimation()
+        }, Math.round(Math.random() * 2000));
+
+        resolve();
+    })
+
+
 }

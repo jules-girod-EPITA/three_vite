@@ -1,10 +1,13 @@
-import GUI from 'lil-gui'
 import {
     AmbientLight,
-    AxesHelper,
     BoxGeometry,
+    BufferGeometry,
+    Euler,
     Group,
+    InstancedMesh,
     LoadingManager,
+    Material,
+    Matrix4,
     Mesh,
     MeshBasicMaterial,
     MeshStandardMaterial,
@@ -12,6 +15,7 @@ import {
     PCFSoftShadowMap,
     PerspectiveCamera,
     PlaneGeometry,
+    Quaternion,
     Scene,
     SpotLight,
     Vector3,
@@ -21,18 +25,20 @@ import {
 import Stats from 'three/examples/jsm/libs/stats.module'
 import { resizeRendererToDisplaySize } from './helpers/responsiveness'
 import './style.css'
-import { loadFbx, loadGlb } from "./loader/model_loader";
-import { getRoadsLine } from "./terrain/road";
-import { getGrassLine } from "./terrain/grass";
+import { extractGeometriesAndMaterialsFromGlb, loadFbx, loadGlb } from "./loader/model_loader";
 import { handleButtonClick, handleUpArrow, initButtonBehavior } from "./components/buttonBehavior";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
 import { gsap } from "gsap";
 import { eventListenerMouvement } from "./controller/controller";
 import { checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree } from "./collision/collision";
+import { CellType } from "./types";
+import { animateCarInstance } from "./terrain/road";
+import { generateWorld, instancedMesh } from "./terrain/worldGeneration";
+import { generateCellConfig } from "./misc";
 
 class Player extends Object3D {
-    private onUpdate: () => void;
+    private readonly onUpdate: () => void;
     private death: boolean = false;
     public done: boolean = false;
     private animationDone: number= 0;
@@ -171,16 +177,24 @@ export let camera: PerspectiveCamera
 let stats: Stats
 let homeDecors: Object3D[] = [];
 
+export const mapLength = 100;
+export const mapWidth = 18;
+export const map: CellType[][] = Array.from({ length: mapLength }, () => Array.from({ length: mapWidth }, () => CellType.Empty));
+
+
 
 const initialCameraPosition = new Vector3(-1, 6, -5.5);
 const initialPlayerPosition = new Vector3(0, 0, 0);
 const initialPlayerRotation = new Vector3(0, 0, 0);
 
+export let trees: Object3D[] = [];
+export let rocks: Object3D[] = [];
+let carSpawnPoint: Vector3[] = [];
+
 export const playableArea = 9 * 2;
 
 export const sideLength = 1
 
-const animation = { enabled: true, play: true }
 
 initButtonBehavior();
 init().then(
@@ -197,7 +211,7 @@ async function addHighScoreText(scene: Scene, text: string, x: number, y: number
     const textGeometry = new TextGeometry(text, {
         font: font,
         size: 1,
-        height: 0.1,
+        depth: 0.1,
     });
 
     const textMaterial = new MeshBasicMaterial({ color: 'white' });
@@ -248,10 +262,18 @@ async function init() {
     // ===== 📦 OBJECTS =====
     {
 
-
+        let playerGeometry: BufferGeometry;
+        let playerMesh: Material | Material[]
         player = new Player();
         try {
             cube = await loadFbx("assets/models/", "Steve.fbx");
+            cube.traverse((child) => {
+                if (child instanceof Mesh) {
+                    playerGeometry = child.geometry.clone();
+                    playerMesh = child.material;
+                }
+            });
+
             cube.scale.set(0.0035, 0.0035, 0.0035);
             cube.position.set(initialPlayerPosition.x, initialPlayerPosition.y, initialPlayerPosition.z);
         } catch (error) {
@@ -261,6 +283,25 @@ async function init() {
         player.rotation.set(initialPlayerRotation.x, initialPlayerRotation.y, initialPlayerRotation.z);
         player.add(cube);
 
+
+        const matrix = new Matrix4();
+        const mesh = new InstancedMesh(playerGeometry, playerMesh, 1000);
+
+        for (let i = 0; i < 1000; i++) {
+
+            const position = new Vector3();
+            const quaternion = new Quaternion();
+
+            position.x = Math.random() * 40 - 20;
+            position.y = 1;
+            position.z = Math.random() * 40 - 20;
+
+            matrix.compose(position, quaternion.random(), new Vector3(1, 1, 1));
+
+            mesh.setMatrixAt(i, matrix);
+        }
+
+        // scene.add(mesh);
         scene.add(player);
 
         const meshesWithoutCollision = ["Street", "Tree_1002"];
@@ -305,6 +346,79 @@ async function init() {
     }
 
 
+    let countRoads = [0];
+    let countTrees = [0, 0, 0];
+    let countDeadTrees = [0, 0, 0];
+    let countFlowers = [0, 0];
+    let countRocks = [0, 0];
+
+
+    // === 🌲 MAP ===
+    {
+        generateWorld(countRoads, countTrees, countDeadTrees, countFlowers, countRocks);
+    }
+
+    // === 🌲 MAP INSTANCE ===
+    {
+        const cellConfig = generateCellConfig();
+
+        const startingTime = new Date().getTime();
+        await Promise.all([
+            instancedMesh("assets/models/streets/", "Street_Straight", countRoads, cellConfig),
+            instancedMesh("assets/models/props/", "Flowers_", countFlowers, cellConfig),
+            instancedMesh("assets/models/props/", "Rock_", countRocks, cellConfig),
+            instancedMesh("assets/models/props/", "DeadTree_", countDeadTrees, cellConfig),
+            instancedMesh("assets/models/props/", "Tree_", countTrees, cellConfig)]);
+        const endTime = new Date().getTime();
+        console.log(`Time to load all the models: ${endTime - startingTime}ms`);
+
+        for (let z = 0; z < map.length; z++) {
+            if (map[z][0] === CellType.ROAD) {
+                carSpawnPoint.push(new Vector3(mapWidth - 2, 0, z * 2));
+            }
+        }
+
+        for (let i = 0; i < carSpawnPoint.length; i++) {
+            const cube = new Mesh(new BoxGeometry(1, 1, 1), new MeshStandardMaterial({ color: 'red' }));
+            cube.position.set(carSpawnPoint[i].x, carSpawnPoint[i].y, carSpawnPoint[i].z);
+            scene.add(cube);
+        }
+
+        const nbModelCars = 6;
+        const carModelsByIndex = Array.from({ length: carSpawnPoint.length }, (_, n) => Math.floor(Math.random() * nbModelCars));
+
+        let countCars : number[] = carModelsByIndex.reduce((acc, value) => {
+            acc[value]++;
+            return acc;
+        }, Array.from({ length: nbModelCars }, () => 0));
+
+        const [carGeometry, carMaterial] = await extractGeometriesAndMaterialsFromGlb("assets/models/cars/", "model", countCars.length);
+        const carInstancedMeshes = Array.from({ length: countCars.length }, (_, n) => new InstancedMesh(carGeometry[n], carMaterial[n], countCars[n]));
+
+
+        let countCurCarsInstanced = Array.from({ length: countCars.length }, () => 0);
+        carModelsByIndex.forEach((value, i) =>
+        {
+            const position = carSpawnPoint[i];
+            let rotation = new Euler(-Math.PI / 2, 0, -Math.PI / 2);
+            let scale = 0.5;
+
+            if (value === 5) {
+                rotation = new Euler(0, -Math.PI / 2, 0);
+                scale = 1;
+            }
+            const count = countCurCarsInstanced[value];
+            carInstancedMeshes[value].setMatrixAt(count, new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), new Vector3(scale, scale, scale)));
+            countCurCarsInstanced[value]++;
+            animateCarInstance(carInstancedMeshes[value], count, carSpawnPoint[i], carGeometry[value], value);
+        });
+
+        carInstancedMeshes.forEach((instancedMesh) => {
+            instancedMesh.position.set(0, 0.1, 0);
+            scene.add(instancedMesh);
+        });
+    }
+
     // === 📦 FBX OBJECT ===
     {
         const randomArray = Array.from({ length: 100 }, () => Math.floor(Math.random() * 100));
@@ -313,21 +427,7 @@ async function init() {
 
         for (let i = 4; i < randomArray.length; i++) {
             if(i === highScore) {
-                addHighScoreText(scene, `Highscore ${highScore}`, 4, 0, i * 2 - 0.4);
-            }
-
-            // 0 to 50 = road
-            // 51 to 100 = grass
-            if (randomArray[i] <= 50) {
-                await getRoadsLine().then((road) => {
-                    road.position.set(0, 0, i * 2);
-                    scene.add(road);
-                });
-            } else {
-                await getGrassLine().then((grass) => {
-                    grass.position.set(0, 0, i * 2);
-                    scene.add(grass);
-                });
+                await addHighScoreText(scene, `Highscore ${highScore}`, 4, 0, i * 2 - 0.4);
             }
         }
     }
@@ -343,7 +443,7 @@ async function init() {
         })
         const skybox = new Mesh(skyboxGeometry, skyboxMaterial);
         skybox.position.z = skyboxGeometry.parameters.depth / 2 - 26
-        skybox.material.emissive.set('skyblue')
+        skybox.material.emissive.set('skyblue' as any);
         scene.add(skybox)
 
 
@@ -406,7 +506,7 @@ async function init() {
     // ===== 📈 STATS & CLOCK =====
     {
         stats = new Stats()
-        // document.body.appendChild(stats.dom)
+        document.body.appendChild(stats.dom)
     }
 
     // // ==== 🐞 DEBUG GUI ====
@@ -503,24 +603,23 @@ async function init() {
 function animate() {
     requestAnimationFrame(animate)
 
-    stats.update()
+    if (stats)
+        stats.update()
 
     // On recupere les voitures
     let cars: Object3D[] = [];
-    let trees: Object3D[] = [];
-    let rocks: Object3D[] = [];
 
     scene.traverse((child) => {
 
         if (child instanceof Group && child.name === "car") {
             cars.push(child as Object3D);
         }
-        if (child instanceof Group && child.name === "tree" || child.name === "dead_tree") {
-            trees.push(child as Object3D);
-        }
-        if (child instanceof Group && child.name === "rock") {
-            rocks.push(child as Object3D);
-        }
+        // if (child instanceof Group && child.name === "tree" || child.name === "dead_tree") {
+        //     trees.push(child as Object3D);
+        // }
+        // if (child instanceof Group && child.name === "rock") {
+        //     rocks.push(child as Object3D);
+        // }
     });
 
     checkCollisionsCars(cars);
