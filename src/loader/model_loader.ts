@@ -15,15 +15,15 @@ export function loadGlb(path: string, filename: string): Promise<Group> {
                 (gltf: GLTF) => {
                     const testModel = gltf.scene as Group;
                     if (testModel != null) {
-                        console.log(`Model loaded ${filename}: `, testModel);
+                        // console.log(`Model loaded ${filename}: `, testModel);
                         resolve(testModel);
                     } else {
-                        console.log("Load FAILED.");
+                        // console.log("Load FAILED.");
                         reject(new Error("Load FAILED."));
                     }
                 },
                 (xhr) => {
-                    console.log((xhr.loaded / xhr.total * 100) + `% loaded -${path + filename}`);
+                    // console.log((xhr.loaded / xhr.total * 100) + `% loaded -${path + filename}`);
                 },
                 (error) => {
                     console.error("An error happened", error);
@@ -49,15 +49,15 @@ export function loadObj(path: string, filenameObj: string, filenameMtl: string):
                             (object) => {
                                 const testModel = object;
                                 if (testModel != null) {
-                                    console.log(`Model loaded ${filenameObj}`, testModel);
+                                    // console.log(`Model loaded ${filenameObj}`, testModel);
                                     resolve(testModel);
                                 } else {
-                                    console.log("Load FAILED.");
+                                    // console.log("Load FAILED.");
                                     reject(new Error("Load FAILED."));
                                 }
                             },
                             (xhr) => {
-                                console.log((xhr.loaded / xhr.total * 100) + `% loaded -${path + filenameObj}`);
+                                // console.log((xhr.loaded / xhr.total * 100) + `% loaded -${path + filenameObj}`);
                             },
                             (error) => {
                                 console.error("An error happened", error);
@@ -66,7 +66,7 @@ export function loadObj(path: string, filenameObj: string, filenameMtl: string):
                         );
                 },
                 (xhr) => {
-                    console.log((xhr.loaded / xhr.total * 100) + `% loaded -${path + filenameMtl}`);
+                //     console.log((xhr.loaded / xhr.total * 100) + `% loaded -${path + filenameMtl}`);
                 },
                 (error) => {
                     console.error("An error happened", error);
@@ -86,15 +86,15 @@ export function loadFbx(path: string, filename: string): Promise<Group> {
                 (object) => {
                     const testModel = object as Group;
                     if (testModel != null) {
-                        console.log(`Model loaded ${filename}`, testModel);
+                        // console.log(`Model loaded ${filename}`, testModel);
                         resolve(testModel);
                     } else {
-                        console.log("Load FAILED.");
+                        // console.log("Load FAILED.");
                         reject(new Error("Load FAILED."));
                     }
                 },
                 (xhr) => {
-                    console.log((xhr.loaded / xhr.total * 100) + `% loaded -${path + filename}`);
+                    // console.log((xhr.loaded / xhr.total * 100) + `% loaded -${path + filename}`);
                 },
                 (error) => {
                     console.error("An error happened", error);

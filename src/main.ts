@@ -1,7 +1,6 @@
 import {
     AmbientLight,
     BoxGeometry,
-    BoxHelper,
     BufferGeometry,
     Euler,
     Group,
@@ -26,12 +25,7 @@ import {
 import Stats from 'three/examples/jsm/libs/stats.module'
 import { resizeRendererToDisplaySize } from './helpers/responsiveness'
 import './style.css'
-import {
-    extractGeometriesAndMaterialsFromFbx,
-    extractGeometriesAndMaterialsFromGlb,
-    loadFbx,
-    loadGlb
-} from "./loader/model_loader";
+import { extractGeometriesAndMaterialsFromGlb, loadFbx, loadGlb } from "./loader/model_loader";
 import { handleButtonClick, handleUpArrow, initButtonBehavior } from "./components/buttonBehavior";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
@@ -39,8 +33,9 @@ import { gsap } from "gsap";
 import { eventListenerMouvement } from "./controller/controller";
 import { checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree } from "./collision/collision";
 import { CellType } from "./types";
-import { generateCellConfig, instantiateCell } from "./misc";
 import { animateCarInstance } from "./terrain/road";
+import { generateWorld, instancedMesh } from "./terrain/worldGeneration";
+import { generateCellConfig } from "./misc";
 
 class Player extends Object3D {
     private readonly onUpdate: () => void;
@@ -182,9 +177,9 @@ export let camera: PerspectiveCamera
 let stats: Stats
 let homeDecors: Object3D[] = [];
 
-const mapLength = 100;
+export const mapLength = 100;
 export const mapWidth = 18;
-const map: CellType[][] = Array.from({ length: mapLength }, () => Array.from({ length: mapWidth }, () => CellType.Empty));
+export const map: CellType[][] = Array.from({ length: mapLength }, () => Array.from({ length: mapWidth }, () => CellType.Empty));
 
 
 
@@ -192,8 +187,8 @@ const initialCameraPosition = new Vector3(-1, 6, -5.5);
 const initialPlayerPosition = new Vector3(0, 0, 0);
 const initialPlayerRotation = new Vector3(0, 0, 0);
 
-let trees: Object3D[] = [];
-let rocks: Object3D[] = [];
+export let trees: Object3D[] = [];
+export let rocks: Object3D[] = [];
 let carSpawnPoint: Vector3[] = [];
 
 export const playableArea = 9 * 2;
@@ -360,151 +355,28 @@ async function init() {
 
     // === 🌲 MAP ===
     {
-        // Fill the map using random values
-        const randomMap = Array.from({ length: mapLength }, () => Array.from({ length: mapWidth }, () => Math.floor(Math.random() * 100)));
-        // [0 to 50] = road (set to -1)
-        // [50 to 100] = grass or empty
-
-        // [51 - 53.5[ = Tree
-
-        // [53.5 - 56[ = Dead tree
-        // [56 - 66[ = Flowers
-        // [66 - 68.5[ = Rock
-        // [68.5 - 100] =  empty
-        for (let z = 4; z < randomMap.length; z++) {
-            if (randomMap[z][0] <= 50) {
-                randomMap[z] = Array.from({ length: mapWidth }, () => -1);
-            }
-
-            for (let x = 0; x < randomMap[z].length; x++) {
-                if (randomMap[z][x] === -1) {
-                    map[z][x] = CellType.ROAD;
-                    countRoads[0]++;
-                } else if (randomMap[z][x] <= 50) {
-                    map[z][x] = CellType.Empty;
-                } else if (randomMap[z][x] <= 53.5) {
-                    if (randomMap[z][x] < 53.5 + 3.5 / 3) {
-                        map[z][x] = CellType.TREE_1;
-                        countTrees[0]++;
-                    } else if (randomMap[z][x] < 53.5 + (3.5 / 3) * 2) {
-                        map[z][x] = CellType.TREE_2;
-                        countTrees[1]++;
-                    } else {
-                        map[z][x] = CellType.TREE_3;
-                        countTrees[2]++;
-                    }
-                } else if (randomMap[z][x] <= 56) {
-                    if (randomMap[z][x] < 56 + 3.5 / 3) {
-                        map[z][x] = CellType.DEADTREE_1;
-                        countDeadTrees[0]++;
-                    } else if (randomMap[z][x] < 56 + (3.5 / 3) * 2) {
-                        map[z][x] = CellType.DEADTREE_2;
-                        countDeadTrees[1]++;
-                    } else {
-                        map[z][x] = CellType.DEADTREE_3;
-                        countDeadTrees[2]++;
-                    }
-                } else if (randomMap[z][x] <= 66) {
-                    if (randomMap[z][x] < 56 + 10 / 2) {
-                        map[z][x] = CellType.FLOWERS_1;
-                        countFlowers[0]++;
-                    } else {
-                        map[z][x] = CellType.FLOWERS_2;
-                        countFlowers[1]++;
-                    }
-                } else if (randomMap[z][x] <= 68.5) {
-                    if (randomMap[z][x] < 66 + 2.5 / 2) {
-                        map[z][x] = CellType.ROCK_1;
-                        countRocks[0]++;
-                    } else {
-                        map[z][x] = CellType.ROCK_2;
-                        countRocks[1]++;
-                    }
-                } else {
-                    map[z][x] = CellType.Empty;
-                }
-            }
-        }
+        generateWorld(countRoads, countTrees, countDeadTrees, countFlowers, countRocks);
     }
 
     // === 🌲 MAP INSTANCE ===
     {
+        const cellConfig = generateCellConfig();
 
-        const [roadGeometry, roadMaterial] = await extractGeometriesAndMaterialsFromFbx("assets/models/streets/", "Street_Straight", countRoads.length);
-        const [flowerGeometries, materialGeometries] = await extractGeometriesAndMaterialsFromFbx("assets/models/props/", "Flowers_", countFlowers.length);
-        const [rockGeometries, rockMaterialGeometries] = await extractGeometriesAndMaterialsFromFbx("assets/models/props/", "Rock_", countRocks.length);
-        const [deadTreeGeometries, deadTreeMaterialGeometries] = await extractGeometriesAndMaterialsFromFbx("assets/models/props/", "DeadTree_", countDeadTrees.length);
-        const [treeGeometries, treeMaterialGeometries] = await extractGeometriesAndMaterialsFromFbx("assets/models/props/", "Tree_", countTrees.length);
-
-        const flowerInstancedMeshes = Array.from({ length: countFlowers.length }, (_, n) => new InstancedMesh(flowerGeometries[n], materialGeometries[n], countFlowers[n]));
-        const rockInstancedMeshes = Array.from({ length: countRocks.length }, (_, n) => new InstancedMesh(rockGeometries[n], rockMaterialGeometries[n], countRocks[n]));
-        const deadTreeInstancedMeshes = Array.from({ length: countDeadTrees.length }, (_, n) => new InstancedMesh(deadTreeGeometries[n], deadTreeMaterialGeometries[n], countDeadTrees[n]));
-        const roadInstancedMeshes = Array.from({ length: countRoads.length }, (_, n) => new InstancedMesh(roadGeometry[n], roadMaterial[n], countRoads[n]));
-        const treeInstancedMeshes = Array.from({ length: countTrees.length }, (_, n) => new InstancedMesh(treeGeometries[n], treeMaterialGeometries[n], countTrees[n]));
-
-        let flowerIndexes = Array.from({ length: countFlowers.length }, () => 0);
-        let rockIndexes = Array.from({ length: countRocks.length }, () => 0);
-        let deadTreeIndexes = Array.from({ length: countDeadTrees.length }, () => 0);
-        let roadIndexes = Array.from({ length: countRoads.length }, () => 0);
-        let treeIndexes = Array.from({ length: countTrees.length }, () => 0);
-
-        const cellConfig = generateCellConfig(roadInstancedMeshes, roadIndexes, flowerInstancedMeshes, flowerIndexes, rockInstancedMeshes, rockIndexes, deadTreeInstancedMeshes, deadTreeIndexes, treeInstancedMeshes, treeIndexes);
-
-
-        // Main loop
-        for (let z = 0; z < map.length; z++) {
-            for (let x = 0; x < map[0].length; x++) {
-                instantiateCell(cellConfig, map[z][x], x, z);
-            }
-        }
-
-        function addInstancedMeshToScene(instancedMeshes: InstancedMesh[]) {
-            instancedMeshes.forEach((instancedMesh) => {
-                instancedMesh.position.set(-mapWidth, 0, 0);
-                scene.add(instancedMesh);
-            });
-        }
-
-        addInstancedMeshToScene(roadInstancedMeshes);
-        addInstancedMeshToScene(flowerInstancedMeshes);
-        addInstancedMeshToScene(rockInstancedMeshes);
-        addInstancedMeshToScene(deadTreeInstancedMeshes);
-        addInstancedMeshToScene(treeInstancedMeshes);
-
-
-        function addCollision(geometries: typeof treeGeometries, meshes: typeof treeInstancedMeshes, countDiffElement: number[], isTree: boolean) {
-            const dummy = new Object3D();
-            for (let i = 0; i < countDiffElement.length; i++) {
-                for (let j = 0; j < countDiffElement[i]; j++) {
-                    meshes[i].getMatrixAt(j, dummy.matrix);
-                    const tempMesh = new Mesh(geometries[i]);
-                    tempMesh.applyMatrix4(dummy.matrix);
-                    tempMesh.position.x -= mapWidth;
-
-                    // Create a BoxHelper for this temporary mesh
-                    const boundingBoxHelper = new BoxHelper(tempMesh, 0xffff00); // Yellow color
-
-                    if (isTree)
-                        trees.push(tempMesh as Object3D);
-                    else
-                        rocks.push(tempMesh as Object3D);
-
-                    scene.add(boundingBoxHelper);
-                }
-            }
-        }
-
-        addCollision(treeGeometries, treeInstancedMeshes, countTrees, true);
-        addCollision(deadTreeGeometries, deadTreeInstancedMeshes, countDeadTrees, true);
-        addCollision(rockGeometries, rockInstancedMeshes, countRocks, false);
-
+        const startingTime = new Date().getTime();
+        await Promise.all([
+            instancedMesh("assets/models/streets/", "Street_Straight", countRoads, cellConfig),
+            instancedMesh("assets/models/props/", "Flowers_", countFlowers, cellConfig),
+            instancedMesh("assets/models/props/", "Rock_", countRocks, cellConfig),
+            instancedMesh("assets/models/props/", "DeadTree_", countDeadTrees, cellConfig),
+            instancedMesh("assets/models/props/", "Tree_", countTrees, cellConfig)]);
+        const endTime = new Date().getTime();
+        console.log(`Time to load all the models: ${endTime - startingTime}ms`);
 
         for (let z = 0; z < map.length; z++) {
             if (map[z][0] === CellType.ROAD) {
                 carSpawnPoint.push(new Vector3(mapWidth - 2, 0, z * 2));
             }
         }
-
 
         for (let i = 0; i < carSpawnPoint.length; i++) {
             const cube = new Mesh(new BoxGeometry(1, 1, 1), new MeshStandardMaterial({ color: 'red' }));
