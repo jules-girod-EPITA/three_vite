@@ -384,7 +384,7 @@ async function init() {
             scene.add(cube);
         }
 
-        const nbModelCars = 5;
+        const nbModelCars = 6;
         const carModelsByIndex = Array.from({ length: carSpawnPoint.length }, (_, n) => Math.floor(Math.random() * nbModelCars));
 
         let countCars : number[] = carModelsByIndex.reduce((acc, value) => {
@@ -400,8 +400,13 @@ async function init() {
         carModelsByIndex.forEach((value, i) =>
         {
             const position = carSpawnPoint[i];
-            const rotation = new Euler(-Math.PI / 2, 0, -Math.PI / 2);
-            const scale = 0.5;
+            let rotation = new Euler(-Math.PI / 2, 0, -Math.PI / 2);
+            let scale = 0.5;
+
+            if (value === 5) {
+                rotation = new Euler(0, -Math.PI / 2, 0);
+                scale = 1;
+            }
             const count = countCurCarsInstanced[value];
             carInstancedMeshes[value].setMatrixAt(count, new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), new Vector3(scale, scale, scale)));
             countCurCarsInstanced[value]++;
