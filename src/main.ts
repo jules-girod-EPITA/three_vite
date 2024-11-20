@@ -1,12 +1,10 @@
 import {
     AmbientLight,
     BoxGeometry,
-    BufferGeometry,
     Euler,
     Group,
     InstancedMesh,
     LoadingManager,
-    Material,
     Matrix4,
     Mesh,
     MeshBasicMaterial,
@@ -48,9 +46,9 @@ class Player extends Object3D {
         this.onUpdate = () => {
             if(this.death && camera.parent === player && !this.done) {
                 const cameraRealPosition = camera.getWorldPosition(new Vector3());
-                scene.remove(camera);
+                board.remove(camera);
                 camera.position.set(cameraRealPosition.x, cameraRealPosition.y, cameraRealPosition.z);
-                scene.add(camera);
+                board.add(camera);
                 const direction = new Vector3();
                 direction.subVectors(camera.position, player.position).normalize();
                 gsap.to(camera.position, {
@@ -75,9 +73,9 @@ class Player extends Object3D {
             }
             else if (this.position.z === 111 * 2 && !this.death && !this.done) {
                 this.done = true;
-                scene.remove(camera);
+                board.remove(camera);
                 camera.position.set(-6, 3.5, 222);
-                scene.add(camera);
+                board.add(camera);
                 camera.lookAt(2.5, 2, 230);
 
                 player.position.set(0, 0, 111 *2);
@@ -119,7 +117,7 @@ class Player extends Object3D {
                 const lightIntensity = 1000;
                 const spotLight = new SpotLight('red', lightIntensity);
                 spotLight.position.set(0, 8.5, 244);
-                scene.add(spotLight);
+                board.add(spotLight);
 
                 gsap.to(spotLight, {
                     duration: 0.5,
@@ -168,7 +166,8 @@ let hospital_site: Object3D
 
 let canvas: HTMLElement
 let renderer: WebGLRenderer
-export let scene: Scene
+let scene : Scene;
+export let board: Group
 let loadingManager: LoadingManager
 let ambientLight: AmbientLight
 export let cube: Object3D
@@ -204,7 +203,7 @@ init().then(
 );
 
 
-async function addHighScoreText(scene: Scene, text: string, x: number, y: number, z: number) {
+async function addHighScoreText(board: Group, text: string, x: number, y: number, z: number) {
     const loader = new FontLoader();
     const font = await loader.loadAsync('https://threejs.org/examples/fonts/gentilis_bold.typeface.json');
 
@@ -220,12 +219,13 @@ async function addHighScoreText(scene: Scene, text: string, x: number, y: number
     textMesh.position.set(x, y, z);
     textMesh.rotation.x = Math.PI / 2;
     textMesh.rotation.y = Math.PI;
-    scene.add(textMesh);
+    board.add(textMesh);
 }
 
 async function init() {
     // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
     {
+        board = new Group();
         canvas = document.querySelector<HTMLElement>(`canvas#${CANVAS_ID}`)!;
         renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true })
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -262,18 +262,9 @@ async function init() {
     // ===== 📦 OBJECTS =====
     {
 
-        let playerGeometry: BufferGeometry;
-        let playerMesh: Material | Material[]
         player = new Player();
         try {
             cube = await loadFbx("assets/models/", "Steve.fbx");
-            cube.traverse((child) => {
-                if (child instanceof Mesh) {
-                    playerGeometry = child.geometry.clone();
-                    playerMesh = child.material;
-                }
-            });
-
             cube.scale.set(0.0035, 0.0035, 0.0035);
             cube.position.set(initialPlayerPosition.x, initialPlayerPosition.y, initialPlayerPosition.z);
         } catch (error) {
@@ -283,26 +274,8 @@ async function init() {
         player.rotation.set(initialPlayerRotation.x, initialPlayerRotation.y, initialPlayerRotation.z);
         player.add(cube);
 
-
-        const matrix = new Matrix4();
-        const mesh = new InstancedMesh(playerGeometry, playerMesh, 1000);
-
-        for (let i = 0; i < 1000; i++) {
-
-            const position = new Vector3();
-            const quaternion = new Quaternion();
-
-            position.x = Math.random() * 40 - 20;
-            position.y = 1;
-            position.z = Math.random() * 40 - 20;
-
-            matrix.compose(position, quaternion.random(), new Vector3(1, 1, 1));
-
-            mesh.setMatrixAt(i, matrix);
-        }
-
         // scene.add(mesh);
-        scene.add(player);
+        board.add(player);
 
         const meshesWithoutCollision = ["Street", "Tree_1002"];
         try {
@@ -319,7 +292,7 @@ async function init() {
                 }
             })
 
-            scene.add(crash_site);
+            board.add(crash_site);
         } catch (error) {
             console.error("An error happened while loading model:", error);
         }
@@ -339,7 +312,7 @@ async function init() {
             hospital_site.position.set(4, 0, 103 * 2);
             hospital_site.rotateY(Math.PI)
 
-            scene.add(hospital_site);
+            board.add(hospital_site);
         } catch (error) {
             console.error("An error happened while loading model:", error);
         }
@@ -381,11 +354,11 @@ async function init() {
         for (let i = 0; i < carSpawnPoint.length; i++) {
             const cube = new Mesh(new BoxGeometry(1, 1, 1), new MeshStandardMaterial({ color: 'red' }));
             cube.position.set(carSpawnPoint[i].x, carSpawnPoint[i].y, carSpawnPoint[i].z);
-            scene.add(cube);
+            board.add(cube);
         }
 
         const nbModelCars = 6;
-        const carModelsByIndex = Array.from({ length: carSpawnPoint.length }, (_, n) => Math.floor(Math.random() * nbModelCars));
+        const carModelsByIndex = Array.from({ length: carSpawnPoint.length }, (_) => Math.floor(Math.random() * nbModelCars));
 
         let countCars : number[] = carModelsByIndex.reduce((acc, value) => {
             acc[value]++;
@@ -415,7 +388,7 @@ async function init() {
 
         carInstancedMeshes.forEach((instancedMesh) => {
             instancedMesh.position.set(0, 0.1, 0);
-            scene.add(instancedMesh);
+            board.add(instancedMesh);
         });
     }
 
@@ -427,7 +400,7 @@ async function init() {
 
         for (let i = 4; i < randomArray.length; i++) {
             if(i === highScore) {
-                await addHighScoreText(scene, `Highscore ${highScore}`, 4, 0, i * 2 - 0.4);
+                await addHighScoreText(board, `Highscore ${highScore}`, 4, 0, i * 2 - 0.4);
             }
         }
     }
@@ -473,7 +446,7 @@ async function init() {
                 groundSquare.receiveShadow = true;
                 groundSquare.rotateX(-Math.PI / 2);
 
-                scene.add(groundSquare);
+                board.add(groundSquare);
             }
         }
 
@@ -489,7 +462,7 @@ async function init() {
             groundOutside.rotateX(-Math.PI / 2)
             groundOutside.position.z = groundGeometry.parameters.height / 2 - 25
             groundOutside.position.x = i === 0 ? -21 : 21
-            scene.add(groundOutside)
+            board.add(groundOutside)
         }
 
 
@@ -598,6 +571,8 @@ async function init() {
     //
     //     gui.close()
     // }
+    board.position.set(0, 0, 0);
+    scene.add(board)
 }
 
 function animate() {
@@ -609,7 +584,7 @@ function animate() {
     // On recupere les voitures
     let cars: Object3D[] = [];
 
-    scene.traverse((child) => {
+    board.traverse((child) => {
 
         if (child instanceof Group && child.name === "car") {
             cars.push(child as Object3D);
@@ -647,9 +622,9 @@ function reset()
     gsap.killTweensOf(player.position);
     gsap.killTweensOf(camera.position);
 
-    scene.remove(camera);
-    scene.remove(player);
-    scene.remove(cube);
+    board.remove(camera);
+    board.remove(player);
+    board.remove(cube);
 
     player = new Player();
     player.position.set(initialPlayerPosition.x, initialPlayerPosition.y, initialPlayerPosition.z);
@@ -662,9 +637,13 @@ function reset()
     camera.lookAt(player.position);
     player.add(cube);
     player.add(camera);
-    scene.add(player);
+    board.add(player);
 
-    document.getElementById("score-value").innerText = "0";
+    let scoreElement = document.getElementById("score-value");
+    if(scoreElement)
+    {
+        scoreElement.innerText = "0";
+    }
 
     const button = document.getElementById("button-wrapper");
     if (button) {

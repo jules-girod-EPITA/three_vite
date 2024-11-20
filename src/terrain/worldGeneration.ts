@@ -1,4 +1,4 @@
-import { map, mapLength, mapWidth, rocks, scene, trees } from "../main";
+import { map, mapLength, mapWidth, rocks, board, trees } from "../main";
 import { CellType } from "../types";
 import { extractGeometriesAndMaterialsFromFbx } from "../loader/model_loader";
 import {
@@ -94,7 +94,7 @@ export async function instancedMesh(path: string, fileName: string, modelCount: 
 
     instancedMeshes.forEach((instancedMesh) => {
         instancedMesh.position.set(-mapWidth, 0, 0);
-        scene.add(instancedMesh);
+        board.add(instancedMesh);
     });
 
 
@@ -128,7 +128,7 @@ export async function instancedMesh(path: string, fileName: string, modelCount: 
     }
 }
 
-export function instantiateMesh(cellConfig: ReturnType<typeof generateCellConfig>, cellType: CellType, instancedMesh : InstancedMesh, index, indexArray: number[],meshIndex: number , x: number, z: number) {
+export function instantiateMesh(cellConfig: ReturnType<typeof generateCellConfig>, cellType: CellType, instancedMesh : InstancedMesh, index : number, indexArray: number[],meshIndex: number , x: number, z: number) {
     const config = cellConfig[cellType];
     if (config === null)
         return;
@@ -158,7 +158,7 @@ function addCollision(geometries: BufferGeometry[] | (Material | Material[])[], 
             else
                 rocks.push(tempMesh as Object3D);
 
-            scene.add(boundingBoxHelper);
+            board.add(boundingBoxHelper);
         }
     }
 }
