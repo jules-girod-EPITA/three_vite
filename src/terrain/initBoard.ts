@@ -24,11 +24,10 @@ import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
 
 export let board: Group = new Group();
-export let cube: Object3D;
+export let cube: Object3D = await loadFbx("assets/models/", "Steve.fbx");
 export let player: Player = new Player();
 
 export async function initBoard(): Promise<Group> {
-    cube = await loadFbx("assets/models/", "Steve.fbx");
     try {
         cube.scale.set(0.0035, 0.0035, 0.0035);
         cube.position.set(initialPlayerPosition.x, initialPlayerPosition.y, initialPlayerPosition.z);
