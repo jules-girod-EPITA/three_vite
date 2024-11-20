@@ -13,12 +13,13 @@ import {
 } from 'three'
 
 import Stats from 'three/examples/jsm/libs/stats.module'
-import { resizeRendererToDisplaySize } from './helpers/responsiveness'
 import './style.css'
 import { initButtonBehavior } from "./components/buttonBehavior";
-import { checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree } from "./collision/collision";
 import { CellType } from "./types";
 import { board, initBoard, player } from "./terrain/initBoard";
+import { ARButton } from 'three/addons/webxr/ARButton.js';
+import { checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree } from "./collision/collision";
+import { resizeRendererToDisplaySize } from "./helpers/responsiveness";
 
 
 const CANVAS_ID = 'scene'
@@ -51,7 +52,7 @@ export let rocks: Object3D[] = [];
 export const playableArea = 9 * 2;
 
 export const sideLength = 1
-
+let isAr : boolean = false;
 
 initButtonBehavior();
 init().then(
@@ -73,7 +74,34 @@ async function init() {
         renderer.shadowMap.enabled = true
         renderer.shadowMap.type = PCFSoftShadowMap
         scene = new Scene()
+    }
 
+    // ===== 📱 AR BUTTON =====
+    {
+        renderer.xr.enabled = true;
+        const arButton = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });
+        arButton.addEventListener('click', () => {
+            isAr = true;
+        });
+        document.body.appendChild(arButton);
+
+        renderer.xr.addEventListener('sessionstart', () => {
+            console.log('session started')
+            const xrCamera = renderer.xr.getCamera();
+            xrCamera.position.set(
+                initialCameraPosition.x,
+                initialCameraPosition.y,
+                initialCameraPosition.z
+            );
+            xrCamera.lookAt(player.position);
+        });
+    }
+
+    // ===== 📦 OBJECTS =====
+    {
+        await initBoard();
+        board.position.set(0, -2, 0);
+        scene.add(board);
     }
 
     // ===== 👨🏻‍💼 LOADING MANAGER =====
@@ -101,11 +129,6 @@ async function init() {
         scene.add(ambientLight)
     }
 
-    // ===== 📦 OBJECTS =====
-    {
-        await initBoard();
-        scene.add(board);
-    }
 
 
 
@@ -230,24 +253,26 @@ async function init() {
 }
 
 function animate() {
-    requestAnimationFrame(animate)
+    renderer.setAnimationLoop(render); // Nécessaire pour WebXR
 
-    if (stats)
-        stats.update()
+    function render() {
+        if (stats)
+            stats.update()
+        checkCollisionsTree(trees);
+        checkCollisionsRocks(rocks);
+        checkCollisionsCars(homeDecors);
 
+        if (!isAr && resizeRendererToDisplaySize(renderer)) {
+            const canvas = renderer.domElement
+            camera.aspect = canvas.clientWidth / canvas.clientHeight
+            camera.updateProjectionMatrix()
+        }
 
-    checkCollisionsTree(trees);
-    checkCollisionsRocks(rocks);
-    checkCollisionsCars(homeDecors);
-
-    if (resizeRendererToDisplaySize(renderer)) {
-        const canvas = renderer.domElement
-        camera.aspect = canvas.clientWidth / canvas.clientHeight
-        camera.updateProjectionMatrix()
+        renderer.render(scene, camera);
     }
-
-
-
-    renderer.render(scene, camera)
 }
+
+
+
+
 
