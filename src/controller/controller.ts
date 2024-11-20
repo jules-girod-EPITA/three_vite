@@ -1,6 +1,6 @@
-import { cube, player } from "../main";
 import { Vector3 } from "three";
 import { gsap } from "gsap";
+import { cube, player } from "../terrain/initBoard";
 
 
 export function initController() {

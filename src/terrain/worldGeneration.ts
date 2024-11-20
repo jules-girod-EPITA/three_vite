@@ -1,4 +1,4 @@
-import { map, mapLength, mapWidth, rocks, board, trees } from "../main";
+import { map, mapLength, mapWidth, rocks, trees } from "../main";
 import { CellType } from "../types";
 import { extractGeometriesAndMaterialsFromFbx } from "../loader/model_loader";
 import {
@@ -14,6 +14,7 @@ import {
     Vector3
 } from "three";
 import { generateCellConfig } from "../misc";
+import { board } from "./initBoard";
 
 
 export function generateWorld(countRoads: number[], countTrees: number[], countDeadTrees: number[], countFlowers: number[], countRocks: number[]) {

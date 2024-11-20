@@ -1,6 +1,6 @@
 import { Box3, Object3D, Vector3 } from "three";
-import { cube, player } from "../main";
 import { gsap } from "gsap";
+import { cube, player } from "../terrain/initBoard";
 
 
 export function checkCollisionsCars(cars: Object3D[]) {

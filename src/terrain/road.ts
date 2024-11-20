@@ -1,8 +1,8 @@
 import { Box3, BufferGeometry, InstancedMesh, Matrix4, Mesh, Object3D, Quaternion, Vector3 } from "three";
 import { loadGlb } from "../loader/model_loader";
-import { cube, mapWidth, player } from "../main";
+import { mapWidth } from "../main";
 import { gsap } from "gsap";
-import { distance } from "three/src/nodes/math/MathNode";
+import { cube, player } from "./initBoard";
 
 
 const cars: { model: string, speed: number, scale: number }[] = [

@@ -16,13 +16,18 @@ export function handleButtonClick() {
 }
 
 export function initButtonBehavior() {
-    document.addEventListener("DOMContentLoaded", () => {
-        const button = document.getElementById("play-button");
+    let button = document.getElementById("play-button");
+    let count = 0;
+    while (!button && count < 1000) {
+        button = document.getElementById("play-button");
+        count++;
+    }
         if (button) {
             button.addEventListener("click", handleButtonClick);
             window.addEventListener('keydown', handleUpArrow);
+        } else {
+            console.error("Button not found");
         }
-    });
 }
 
 export function handleUpArrow(event : KeyboardEvent) {
