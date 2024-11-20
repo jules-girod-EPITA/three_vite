@@ -1,23 +1,24 @@
+
 import {
     AmbientLight,
-    BoxGeometry,
+    BoxGeometry, CylinderGeometry,
     Euler,
-    Group,
+    Group, HemisphereLight,
     InstancedMesh,
     LoadingManager,
     Matrix4,
     Mesh,
-    MeshBasicMaterial,
+    MeshBasicMaterial, MeshPhongMaterial,
     MeshStandardMaterial,
     Object3D,
-    PCFSoftShadowMap,
     PerspectiveCamera,
     PlaneGeometry,
-    Quaternion,
+    Quaternion, RingGeometry,
     Scene,
     SpotLight,
     Vector3,
     WebGLRenderer,
+    XRTargetRaySpace
 } from 'three'
 
 import Stats from 'three/examples/jsm/libs/stats.module'
@@ -34,6 +35,9 @@ import { CellType } from "./types";
 import { animateCarInstance } from "./terrain/road";
 import { generateWorld, instancedMesh } from "./terrain/worldGeneration";
 import { generateCellConfig } from "./misc";
+import {ARButton} from "three/examples/jsm/webxr/ARButton";
+// import { ARButton } from 'three/addons/webxr/ARButton.js';
+
 
 class Player extends Object3D {
     private readonly onUpdate: () => void;
@@ -76,7 +80,7 @@ class Player extends Object3D {
                 board.remove(camera);
                 camera.position.set(-6, 3.5, 222);
                 board.add(camera);
-                camera.lookAt(2.5, 2, 230);
+                // camera.lookAt(2.5, 2, 230);
 
                 player.position.set(0, 0, 111 *2);
 
@@ -160,11 +164,19 @@ class Player extends Object3D {
 }
 
 
-const CANVAS_ID = 'scene'
+// const CANVAS_ID = 'scene'
 
 let hospital_site: Object3D
 
-let canvas: HTMLElement
+let container : Element;
+let controller : XRTargetRaySpace;
+
+let reticule : Mesh;
+
+let hitTestSource : XRHitTestSource | null;
+let hitTestSourceRequested : boolean = false;
+let boardPlaced : boolean = false;
+
 let renderer: WebGLRenderer
 let scene : Scene;
 export let board: Group
@@ -195,10 +207,10 @@ export const playableArea = 9 * 2;
 export const sideLength = 1
 
 
-initButtonBehavior();
+// initButtonBehavior();
 init().then(
     () => {
-        animate();
+        renderer.setAnimationLoop(animate);
     }
 );
 
@@ -226,37 +238,59 @@ async function init() {
     // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
     {
         board = new Group();
-        canvas = document.querySelector<HTMLElement>(`canvas#${CANVAS_ID}`)!;
-        renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true })
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-        renderer.shadowMap.enabled = true
-        renderer.shadowMap.type = PCFSoftShadowMap
+        // canvas = document.querySelector<HTMLElement>(`canvas#${CANVAS_ID}`)!;
+        // renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true })
+        // renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+        // renderer.shadowMap.enabled = true
+        // renderer.shadowMap.type = PCFSoftShadowMap
         scene = new Scene()
+
+
+        // ===== DIV ELEMENT =====
+
+        container = document.createElement( 'div' );
+        document.body.appendChild( container );
+
+        // ===== SCENE, CAMERA AND LIGHT =====
+
+
+
+
+        // ===== RENDERER =====
+
+        renderer = new WebGLRenderer( { antialias: true, alpha: true } );
+        renderer.setPixelRatio( window.devicePixelRatio );
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        renderer.xr.enabled = true;
+        container.appendChild( renderer.domElement );
     }
 
     // ===== 👨🏻‍💼 LOADING MANAGER =====
-    {
-        loadingManager = new LoadingManager()
-
-        loadingManager.onStart = () => {
-            console.log('loading started')
-        }
-        loadingManager.onProgress = (url, loaded, total) => {
-            console.log('loading in progress:')
-            console.log(`${url} -> ${loaded} / ${total}`)
-        }
-        loadingManager.onLoad = () => {
-            console.log('loaded!')
-        }
-        loadingManager.onError = () => {
-            console.log('❌ error while loading')
-        }
-    }
+    // {
+    //     loadingManager = new LoadingManager()
+    //
+    //     loadingManager.onStart = () => {
+    //         console.log('loading started')
+    //     }
+    //     loadingManager.onProgress = (url, loaded, total) => {
+    //         console.log('loading in progress:')
+    //         console.log(`${url} -> ${loaded} / ${total}`)
+    //     }
+    //     loadingManager.onLoad = () => {
+    //         console.log('loaded!')
+    //     }
+    //     loadingManager.onError = () => {
+    //         console.log('❌ error while loading')
+    //     }
+    // }
 
     // ===== 💡 LIGHTS =====
     {
-        ambientLight = new AmbientLight('white', 3);
-        scene.add(ambientLight)
+        // ambientLight = new AmbientLight('white', 3);
+        // scene.add(ambientLight)
+        const light = new HemisphereLight( 0xffffff, 0xbbbbff, 3 );
+        light.position.set( 0.5, 1, 0.25 );
+        scene.add( light );
     }
 
     // ===== 📦 OBJECTS =====
@@ -470,9 +504,11 @@ async function init() {
 
     // ===== 🎥 CAMERA =====
     {
-        camera = new PerspectiveCamera(60, canvas.clientWidth / canvas.clientHeight, 2.4, 650)
-        camera.position.set(initialCameraPosition.x, initialCameraPosition.y, initialCameraPosition.z)
-        camera.lookAt(player.position)
+        camera = new PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 20 );
+
+        // camera = new PerspectiveCamera(60, canvas.clientWidth / canvas.clientHeight, 2.4, 650)
+        // camera.position.set(initialCameraPosition.x, initialCameraPosition.y, initialCameraPosition.z)
+        // camera.lookAt(player.position)
         player.add(camera)
     }
 
@@ -571,46 +607,115 @@ async function init() {
     //
     //     gui.close()
     // }
-    board.position.set(0, 0, 0);
-    scene.add(board)
-}
 
-function animate() {
-    requestAnimationFrame(animate)
+    // ===== BUTTON =====
 
-    if (stats)
-        stats.update()
+    document.body.appendChild( ARButton.createButton( renderer, { requiredFeatures: [ 'hit-test' ] } ) );
 
-    // On recupere les voitures
-    let cars: Object3D[] = [];
+    function onSelect() {
 
-    board.traverse((child) => {
-
-        if (child instanceof Group && child.name === "car") {
-            cars.push(child as Object3D);
+        if ( reticule.visible && !boardPlaced) {
+            // const material = new MeshPhongMaterial( { color: 0xffffff * Math.random() } );
+            // const geometry = new CylinderGeometry( 0.1, 0.1, 0.2, 32 ).translate( 0, 0.1, 0 );
+            // const mesh = new Mesh( geometry, material );
+            reticule.matrix.decompose( board.position, board.quaternion, board.scale );
+            // mesh.scale.y = Math.random() * 2 + 1;
+            scene.add( board );
+            boardPlaced = true;
         }
-        // if (child instanceof Group && child.name === "tree" || child.name === "dead_tree") {
-        //     trees.push(child as Object3D);
-        // }
-        // if (child instanceof Group && child.name === "rock") {
-        //     rocks.push(child as Object3D);
-        // }
-    });
-
-    checkCollisionsCars(cars);
-    checkCollisionsTree(trees);
-    checkCollisionsRocks(rocks);
-    checkCollisionsCars(homeDecors);
-
-    if (resizeRendererToDisplaySize(renderer)) {
-        const canvas = renderer.domElement
-        camera.aspect = canvas.clientWidth / canvas.clientHeight
-        camera.updateProjectionMatrix()
     }
 
+    // ===== CONTROLLER =====
+
+    controller = renderer.xr.getController( 0 );
+    controller.addEventListener( 'select', onSelect );
+    scene.add( controller );
+
+    // ===== RETICLE =====
+
+    reticule = new Mesh(
+        new RingGeometry( 0.15, 0.2, 32 ).rotateX( - Math.PI / 2 ),
+        new MeshBasicMaterial()
+    );
+    reticule.matrixAutoUpdate = false;
+    reticule.visible = false;
+    scene.add( reticule );
+
+    board.position.set(0, 0, 0);
+    // scene.add(board)
+
+    window.addEventListener( 'resize', onWindowResize );
+}
+
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize( window.innerWidth, window.innerHeight );
+}
+
+function animate(timestamp : DOMHighResTimeStamp, frame? : XRFrame ) {
+    requestAnimationFrame(animate)
+
+    // if (stats)
+    //     stats.update()
 
 
-    renderer.render(scene, camera)
+
+    // if (resizeRendererToDisplaySize(renderer)) {
+    //     const canvas = renderer.domElement
+    //     camera.aspect = canvas.clientWidth / canvas.clientHeight
+    //     camera.updateProjectionMatrix()
+    // }
+
+    if ( frame ) {
+        const referenceSpace = renderer.xr.getReferenceSpace();
+        const session = renderer.xr.getSession();
+        if ( session !== null && hitTestSourceRequested === false ) {
+            session.requestReferenceSpace( 'viewer' ).then( function ( referenceSpace ) {
+                if (session.requestHitTestSource) {
+                    session.requestHitTestSource({space: referenceSpace})?.then(function (source) {
+                        hitTestSource = source;
+                    });
+                }
+            } );
+            session.addEventListener( 'end', function () {
+
+                hitTestSourceRequested = false;
+                hitTestSource = null;
+            } );
+            hitTestSourceRequested = true;
+        }
+
+        if ( hitTestSource ) {
+
+            const hitTestResults = frame.getHitTestResults( hitTestSource );
+
+            if ( hitTestResults.length ) {
+
+                const hit = hitTestResults[ 0 ];
+
+                reticule.visible = true;
+
+                if(referenceSpace)
+                {
+                    const hitPos = hit.getPose( referenceSpace );
+                    if(hitPos)
+                        reticule.matrix.fromArray( hitPos.transform.matrix );
+                }
+
+            } else {
+                reticule.visible = false;
+            }
+        }
+        if(boardPlaced)
+        {
+            checkCollisionsTree(trees);
+            checkCollisionsRocks(rocks);
+            checkCollisionsCars(homeDecors);
+        }
+    }
+
+    renderer.render( scene, camera );
 }
 
 function reset()
@@ -634,7 +739,7 @@ function reset()
 
     cube.rotation.set(initialPlayerRotation.x, initialPlayerRotation.y, initialPlayerRotation.z);
     camera.position.set(initialCameraPosition.x, initialCameraPosition.y, initialCameraPosition.z);
-    camera.lookAt(player.position);
+    // camera.lookAt(player.position);
     player.add(cube);
     player.add(camera);
     board.add(player);
