@@ -99,8 +99,9 @@ export async function initBoard(): Promise<Group> {
         const cellConfig = generateCellConfig();
 
         const startingTime = new Date().getTime();
+        console.log(countRoads, countTrees, countDeadTrees, countFlowers, countRocks);
         await Promise.all([
-            instancedMesh("assets/models/streets/", "Street_Straight", countRoads, cellConfig),
+            instancedMesh("assets/models/streets/", "Street_Straight_full_row", countRoads, cellConfig),
             instancedMesh("assets/models/props/", "Flowers_", countFlowers, cellConfig),
             instancedMesh("assets/models/props/", "Rock_", countRocks, cellConfig),
             instancedMesh("assets/models/props/", "DeadTree_", countDeadTrees, cellConfig),
@@ -170,47 +171,30 @@ export async function initBoard(): Promise<Group> {
     {
         const groundWidth = 20;
         const groundHeight = 150 * 2;
-        const squareSize = 2;
+        const squareSize = 2; // Size of each square in the checkerboard pattern
 
         const lightGreenMaterial = new MeshStandardMaterial({
-            color: "#BEF466",
+            color: '#BEF466',
             side: 2,
         });
         const darkGreenMaterial = new MeshStandardMaterial({
-            color: "#B7EC5E",
+            color: '#B7EC5E',
             side: 2,
         });
 
-        const lightGreenGeometry = new PlaneGeometry(squareSize, squareSize);
-        const darkGreenGeometry = new PlaneGeometry(squareSize, squareSize);
-
-        const lightGreenMesh = new InstancedMesh(lightGreenGeometry, lightGreenMaterial, (groundWidth / squareSize) * (groundHeight / squareSize));
-        const darkGreenMesh = new InstancedMesh(darkGreenGeometry, darkGreenMaterial, (groundWidth / squareSize) * (groundHeight / squareSize));
-
-        let lightIndex = 0;
-        let darkIndex = 0;
-
-        const tempMatrix = new Matrix4();
-
         for (let z = 0; z < groundHeight; z += squareSize) {
             for (let x = -groundWidth / 2 - 2; x < groundWidth / 2; x += squareSize) {
+                const groundGeometry = new PlaneGeometry(squareSize, squareSize);
                 const isLightGreen = (x / squareSize + z / squareSize) % 2 === 0;
-                const xPos = x + squareSize / 2 + 1;
-                const zPos = z + squareSize / 2 - 25;
+                const groundMaterial = isLightGreen ? lightGreenMaterial : darkGreenMaterial;
+                const groundSquare = new Mesh(groundGeometry, groundMaterial);
+                groundSquare.position.set(x + squareSize / 2 + 1, -0.01, z + squareSize / 2 - 25);
+                groundSquare.receiveShadow = true;
+                groundSquare.rotateX(-Math.PI / 2);
 
-                tempMatrix.makeRotationX(-Math.PI / 2);
-                tempMatrix.setPosition(xPos, -0.01, zPos);
-
-                if (isLightGreen) {
-                    lightGreenMesh.setMatrixAt(lightIndex++, tempMatrix);
-                } else {
-                    darkGreenMesh.setMatrixAt(darkIndex++, tempMatrix);
-                }
+                board.add(groundSquare);
             }
         }
-
-        board.add(lightGreenMesh);
-        board.add(darkGreenMesh);
 
         const groundGeometry = new PlaneGeometry(groundWidth, groundHeight);
         for (let i = 0; i < 2; i++) {

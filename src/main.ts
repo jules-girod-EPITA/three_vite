@@ -1,32 +1,36 @@
 import {
     AmbientLight,
-    BoxGeometry,
+    Clock,
+    CylinderGeometry,
+    HemisphereLight,
     LoadingManager,
     Mesh,
-    MeshStandardMaterial,
+    MeshPhongMaterial,
     Object3D,
-    PCFSoftShadowMap,
     PerspectiveCamera,
     Scene,
     Vector3,
     WebGLRenderer,
 } from 'three'
+// XR Emulator
+import { DevUI } from '@iwer/devui';
+import { metaQuest3, XRDevice } from 'iwer';
+
 
 import Stats from 'three/examples/jsm/libs/stats.module'
 import './style.css'
 import { initButtonBehavior } from "./components/buttonBehavior";
 import { CellType } from "./types";
-import { board, initBoard, player } from "./terrain/initBoard";
-import { ARButton } from 'three/addons/webxr/ARButton.js';
-import { checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree } from "./collision/collision";
-import { resizeRendererToDisplaySize } from "./helpers/responsiveness";
+import { initBoard } from "./terrain/initBoard";
+
+import { XRButton } from 'three/addons/webxr/XRButton.js';
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 
 const CANVAS_ID = 'scene'
 
 
-
-let canvas: HTMLElement
+// let canvas: HTMLElement
 let renderer: WebGLRenderer
 let scene : Scene;
 let loadingManager: LoadingManager
@@ -53,56 +57,118 @@ export const playableArea = 9 * 2;
 
 export const sideLength = 1
 let isAr : boolean = false;
+let controller;
 
 initButtonBehavior();
-init().then(
-    () => {
-        animate();
-    }
-);
 
+async function setupXR(xrMode) {
 
+    if (xrMode !== 'immersive-vr') return;
 
-
-async function init() {
-    // ===== 🖼️ CANVAS, RENDERER, & SCENE =====
-    {
-
-        canvas = document.querySelector<HTMLElement>(`canvas#${CANVAS_ID}`)!;
-        renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true })
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-        renderer.shadowMap.enabled = true
-        renderer.shadowMap.type = PCFSoftShadowMap
-        scene = new Scene()
+    // iwer setup: emulate vr session
+    let nativeWebXRSupport = false;
+    if (navigator.xr) {
+        nativeWebXRSupport = await navigator.xr.isSessionSupported(xrMode);
     }
 
-    // ===== 📱 AR BUTTON =====
-    {
-        renderer.xr.enabled = true;
-        const arButton = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });
-        arButton.addEventListener('click', () => {
-            isAr = true;
-        });
-        document.body.appendChild(arButton);
+    if (!nativeWebXRSupport) {
+        const xrDevice = new XRDevice(metaQuest3);
+        xrDevice.installRuntime();
+        xrDevice.fovy = (75 / 180) * Math.PI;
+        xrDevice.ipd = 0;
+        // noinspection TypeScriptUnresolvedReference
+        window.xrdevice = xrDevice;
+        // noinspection TypeScriptUnresolvedReference
+        xrDevice.controllers.right.position.set(0.15649, 1.43474, -0.38368);
+        // noinspection TypeScriptUnresolvedReference
+        xrDevice.controllers.right.quaternion.set(
+            0.14766305685043335,
+            0.02471366710960865,
+            -0.0037767395842820406,
+            0.9887216687202454,
+        );
+        // noinspection TypeScriptUnresolvedReference
+        xrDevice.controllers.left.position.set(-0.15649, 1.43474, -0.38368);
+        // noinspection TypeScriptUnresolvedReference
+        xrDevice.controllers.left.quaternion.set(
+            0.14766305685043335,
+            0.02471366710960865,
+            -0.0037767395842820406,
+            0.9887216687202454,
+        );
+        new DevUI(xrDevice);
+    }
+}
 
-        renderer.xr.addEventListener('sessionstart', () => {
-            console.log('session started')
-            const xrCamera = renderer.xr.getCamera();
-            xrCamera.position.set(
-                initialCameraPosition.x,
-                initialCameraPosition.y,
-                initialCameraPosition.z
-            );
-            xrCamera.lookAt(player.position);
-        });
+const animate = () => {
+
+    const delta = clock.getDelta();
+    const elapsed = clock.getElapsedTime();
+
+    // can be used in shaders: uniforms.u_time.value = elapsed;
+
+    renderer.render(scene, camera);
+};
+
+
+function init() {
+
+    scene = new Scene();
+
+    const aspect = window.innerWidth / window.innerHeight;
+    camera = new PerspectiveCamera(75, aspect, 0.1, 10); // meters
+    camera.position.set(0, 1.6, 3);
+
+    const light = new AmbientLight(0xffffff, 1.0); // soft white light
+    scene.add(light);
+
+    const hemiLight = new HemisphereLight(0xffffff, 0xbbbbff, 3);
+    hemiLight.position.set(0.5, 1, 0.25);
+    scene.add(hemiLight);
+
+    renderer = new WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setAnimationLoop(animate); // requestAnimationFrame() replacement, compatible with XR
+    renderer.xr.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    /*
+     document.body.appendChild( XRButton.createButton( renderer, {
+     'optionalFeatures': [ 'depth-sensing' ],
+     'depthSensing': { 'usagePreference': [ 'gpu-optimized' ], 'dataFormatPreference': [] }
+     } ) );
+     */
+
+    const xrButton = XRButton.createButton(renderer, {});
+    xrButton.style.backgroundColor = 'skyblue';
+    document.body.appendChild(xrButton);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    //controls.listenToKeyEvents(window); // optional
+    controls.target.set(0, 1.6, 0);
+    controls.update();
+
+    // Handle input: see THREE.js webxr_ar_cones
+
+    const geometry = new CylinderGeometry(0, 0.05, 0.2, 32).rotateX(Math.PI / 2);
+
+    const onSelect = (event) => {
+
+        const material = new MeshPhongMaterial({ color: 0xffffff * Math.random() });
+        const mesh = new Mesh(geometry, material);
+        mesh.position.set(0, 0, -0.3).applyMatrix4(controller.matrixWorld);
+        mesh.quaternion.setFromRotationMatrix(controller.matrixWorld);
+        scene.add(mesh);
+
     }
 
-    // ===== 📦 OBJECTS =====
-    {
-        await initBoard();
-        board.position.set(0, -2, 0);
-        scene.add(board);
-    }
+    controller = renderer.xr.getController(0);
+    controller.addEventListener('select', onSelect);
+    scene.add(controller);
+
+
+    window.addEventListener('resize', onWindowResize, false);
 
     // ===== 👨🏻‍💼 LOADING MANAGER =====
     {
@@ -134,25 +200,26 @@ async function init() {
 
 
     // ==== 🌲 DECORATION ====
-    {
-        // ==== 🌌 SKYBOX ====
-        const skyboxGeometry = new BoxGeometry(100, 100, 325 * 2)
-        const skyboxMaterial = new MeshStandardMaterial({
-            color: 'skyblue',
-            side: 1,
-        })
-        const skybox = new Mesh(skyboxGeometry, skyboxMaterial);
-        skybox.position.z = skyboxGeometry.parameters.depth / 2 - 26
-        skybox.material.emissive.set('skyblue' as any);
-        scene.add(skybox)
-    }
+    // {
+    //     // ==== 🌌 SKYBOX ====
+    //     const skyboxGeometry = new BoxGeometry(100, 100, 325 * 2)
+    //     const skyboxMaterial = new MeshStandardMaterial({
+    //         color: 'skyblue',
+    //         side: 1,
+    //     })
+    //     const skybox = new Mesh(skyboxGeometry, skyboxMaterial);
+    //     skybox.position.z = skyboxGeometry.parameters.depth / 2 - 26
+    //     skybox.material.emissive.set('skyblue' as any);
+    //     scene.add(skybox)
+    // }
 
     // ===== 🎥 CAMERA =====
     {
-        camera = new PerspectiveCamera(60, canvas.clientWidth / canvas.clientHeight, 2.4, 650)
-        camera.position.set(initialCameraPosition.x, initialCameraPosition.y, initialCameraPosition.z)
-        camera.lookAt(player.position)
-        player.add(camera)
+        camera = new PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 650)
+        camera.position.set(0, 1.6, 3);
+        // camera.position.set(initialCameraPosition.x, initialCameraPosition.y, initialCameraPosition.z)
+        // camera.lookAt(player.position)
+        // player.add(camera)
     }
 
     // ===== 📈 STATS & CLOCK =====
@@ -250,29 +317,45 @@ async function init() {
     //
     //     gui.close()
     // }
+
+    initBoard().then((board) => {
+        scene.add(board);
+    })
+
+
 }
 
-function animate() {
-    renderer.setAnimationLoop(render); // Nécessaire pour WebXR
+// function animate() {
+//     renderer.setAnimationLoop(render); // Nécessaire pour WebXR
+//
+//     function render() {
+//         if (stats)
+//             stats.update()
+//         checkCollisionsTree(trees);
+//         checkCollisionsRocks(rocks);
+//         checkCollisionsCars(homeDecors);
+//
+//         if (!isAr && resizeRendererToDisplaySize(renderer)) {
+//             const canvas = renderer.domElement
+//             camera.aspect = canvas.clientWidth / canvas.clientHeight
+//             camera.updateProjectionMatrix()
+//         }
+//
+//         renderer.render(scene, camera);
+//     }
+// }
+function onWindowResize() {
 
-    function render() {
-        if (stats)
-            stats.update()
-        checkCollisionsTree(trees);
-        checkCollisionsRocks(rocks);
-        checkCollisionsCars(homeDecors);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
 
-        if (!isAr && resizeRendererToDisplaySize(renderer)) {
-            const canvas = renderer.domElement
-            camera.aspect = canvas.clientWidth / canvas.clientHeight
-            camera.updateProjectionMatrix()
-        }
+    renderer.setSize(window.innerWidth, window.innerHeight);
 
-        renderer.render(scene, camera);
-    }
 }
 
+const clock = new Clock();
 
-
+await setupXR('immersive-ar');
+init();
 
 

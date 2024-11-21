@@ -1,18 +1,7 @@
 import { map, mapLength, mapWidth, rocks, trees } from "../main";
 import { CellType } from "../types";
 import { extractGeometriesAndMaterialsFromFbx } from "../loader/model_loader";
-import {
-    BoxHelper,
-    BufferGeometry,
-    Euler,
-    InstancedMesh,
-    Material,
-    Matrix4,
-    Mesh,
-    Object3D,
-    Quaternion,
-    Vector3
-} from "three";
+import { BufferGeometry, Euler, InstancedMesh, Material, Matrix4, Mesh, Object3D, Quaternion, Vector3 } from "three";
 import { generateCellConfig } from "../misc";
 import { board } from "./initBoard";
 
@@ -35,7 +24,7 @@ export function generateWorld(countRoads: number[], countTrees: number[], countD
         }
 
         for (let x = 0; x < randomMap[z].length; x++) {
-            if (randomMap[z][x] === -1) {
+            if (randomMap[z][x] === -1 && x === 0) {
                 map[z][x] = CellType.ROAD;
                 countRoads[0]++;
             } else if (randomMap[z][x] <= 50) {
@@ -101,7 +90,7 @@ export async function instancedMesh(path: string, fileName: string, modelCount: 
 
     for (let z = 0; z < map.length; z++) {
         for (let x = 0; x < map[0].length; x++) {
-            if(fileName === "Street_Straight" && map[z][x] === CellType.ROAD)
+            if (fileName === "Street_Straight_full_row" && map[z][x] === CellType.ROAD && x === 0)
             {
                 instantiateMesh(cellConfig, map[z][x], instancedMeshes[0], modelIndexes[0], modelIndexes, 0, x, z);
             }
@@ -152,14 +141,14 @@ function addCollision(geometries: BufferGeometry[] | (Material | Material[])[], 
             tempMesh.position.x -= mapWidth;
 
             // TODO REMOVE : Create a BoxHelper for this temporary mesh
-            const boundingBoxHelper = new BoxHelper(tempMesh, 0xffff00); // Yellow color
+            // const boundingBoxHelper = new BoxHelper(tempMesh, 0xffff00); // Yellow color
 
             if (isTree)
                 trees.push(tempMesh as Object3D);
             else
                 rocks.push(tempMesh as Object3D);
 
-            board.add(boundingBoxHelper);
+            // board.add(boundingBoxHelper);
         }
     }
 }
