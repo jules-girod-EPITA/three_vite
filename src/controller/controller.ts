@@ -1,10 +1,19 @@
 import { Vector3 } from "three";
 import { gsap } from "gsap";
-import { cube, player } from "../terrain/initBoard";
+import {board, cube, player} from "../terrain/initBoard";
 
 
 export function initController() {
     window.addEventListener('keydown', eventListenerMouvement);
+}
+
+
+export const onSelectAr = (event) => {
+    console.log("clicked")
+    gsap.to(board.position, {
+        duration: 0.2,
+        z: board.position.z + 2,
+    });
 }
 
 export const eventListenerMouvement = (event : KeyboardEvent) => {

@@ -25,6 +25,7 @@ import { initBoard } from "./terrain/initBoard";
 
 import { XRButton } from 'three/addons/webxr/XRButton.js';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import {onSelectAr} from "./controller/controller";
 
 
 const CANVAS_ID = 'scene'
@@ -153,18 +154,10 @@ function init() {
 
     const geometry = new CylinderGeometry(0, 0.05, 0.2, 32).rotateX(Math.PI / 2);
 
-    const onSelect = (event) => {
 
-        const material = new MeshPhongMaterial({ color: 0xffffff * Math.random() });
-        const mesh = new Mesh(geometry, material);
-        mesh.position.set(0, 0, -0.3).applyMatrix4(controller.matrixWorld);
-        mesh.quaternion.setFromRotationMatrix(controller.matrixWorld);
-        scene.add(mesh);
-
-    }
 
     controller = renderer.xr.getController(0);
-    controller.addEventListener('select', onSelect);
+    controller.addEventListener('select', onSelectAr);
     scene.add(controller);
 
 
@@ -319,10 +312,9 @@ function init() {
     // }
 
     initBoard().then((board) => {
+        board.rotation.set(0, Math.PI, 0);
         scene.add(board);
-    })
-
-
+    });
 }
 
 // function animate() {
