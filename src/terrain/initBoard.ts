@@ -28,6 +28,7 @@ export let cube: Object3D = await loadFbx("assets/models/", "Steve.fbx");
 export let player: Player = new Player();
 
 export async function initBoard(): Promise<Group> {
+    cube.visible = false;
     try {
         cube.scale.set(0.0035, 0.0035, 0.0035);
         cube.position.set(initialPlayerPosition.x, initialPlayerPosition.y, initialPlayerPosition.z);
