@@ -4,8 +4,6 @@ import {
     CylinderGeometry,
     HemisphereLight,
     LoadingManager,
-    Mesh,
-    MeshPhongMaterial,
     Object3D,
     PerspectiveCamera,
     Scene,
@@ -25,7 +23,8 @@ import { initBoard } from "./terrain/initBoard";
 
 import { XRButton } from 'three/addons/webxr/XRButton.js';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import {onSelectAr} from "./controller/controller";
+import { onSelectAr } from "./controller/controller";
+import { checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree } from "./collision/collision";
 
 
 const CANVAS_ID = 'scene'
@@ -57,7 +56,6 @@ export let rocks: Object3D[] = [];
 export const playableArea = 9 * 2;
 
 export const sideLength = 1
-let isAr : boolean = false;
 let controller;
 
 initButtonBehavior();
@@ -313,6 +311,7 @@ function init() {
 
     initBoard().then((board) => {
         board.rotation.set(0, Math.PI, 0);
+        board.position.set(0, 0.5, 0);
         scene.add(board);
     });
 }
