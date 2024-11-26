@@ -21,11 +21,12 @@ import { initButtonBehavior } from "./components/buttonBehavior";
 import { CellType } from "./types";
 import { initBoard } from "./terrain/initBoard";
 
-import { XRButton } from 'three/addons/webxr/XRButton.js';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { onSelectAr } from "./controller/controller";
+import { ARButton } from 'three/examples/jsm/webxr/ARButton.js';
 import { checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree } from "./collision/collision";
 
+import Hammer from "hammerjs";
 
 const CANVAS_ID = 'scene'
 
@@ -106,6 +107,9 @@ const animate = () => {
 
     // can be used in shaders: uniforms.u_time.value = elapsed;
 
+    const xrCamera = renderer.xr.getCamera();
+    console.log(xrCamera.rotation.z);
+
     renderer.render(scene, camera);
 };
 
@@ -139,9 +143,38 @@ function init() {
      } ) );
      */
 
-    const xrButton = XRButton.createButton(renderer, {});
+    const xrButton = ARButton.createButton(renderer, {});
     xrButton.style.backgroundColor = 'skyblue';
     document.body.appendChild(xrButton);
+
+    xrButton.addEventListener("click", () => {
+        const body = document.body
+        const hammertime = new Hammer(body)
+        console.log(hammertime)
+
+
+        hammertime.on("panleft", ev => {
+            ;
+            console.log("swipe left", ev);
+        })
+
+
+        hammertime.on("panright", ev => {
+            console.log("swipe right", ev)
+        })
+
+        hammertime.on("panup", ev => {
+            console.log("swipe up", ev)
+        })
+
+        hammertime.on("pandown", ev => {
+            console.log("swipe down", ev)
+        });
+
+        hammertime.on("tap", ev => {
+            console.log("tap")
+        });
+    })
 
     const controls = new OrbitControls(camera, renderer.domElement);
     //controls.listenToKeyEvents(window); // optional
@@ -311,7 +344,7 @@ function init() {
 
     initBoard().then((board) => {
         board.rotation.set(0, Math.PI, 0);
-        board.position.set(0, 0.5, 0);
+        board.position.set(0, -0.5, 0);
         scene.add(board);
     });
 }

@@ -14,6 +14,7 @@
     "cloud": "cloudflared --url http://localhost:5173/"
   },
   "devDependencies": {
+    "@types/hammerjs": "^2.0.46",
     "@types/three": "^0.169.0",
     "http-server": "^14.1.1",
     "typescript": "^5.6.2",
@@ -24,6 +25,7 @@
   "dependencies": {
     "@iwer/devui": "^0.2.1",
     "gsap": "^3.12.5",
+    "hammerjs": "^2.0.8",
     "lil-gui": "^0.19.2",
     "three": "^0.169.0"
   }
