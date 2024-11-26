@@ -1,7 +1,6 @@
 import {
     AmbientLight,
     Clock,
-    CylinderGeometry,
     HemisphereLight,
     LoadingManager,
     Object3D,
@@ -18,17 +17,15 @@ import { metaQuest3, XRDevice } from 'iwer';
 import Stats from 'three/examples/jsm/libs/stats.module'
 import './style.css'
 import { initButtonBehavior } from "./components/buttonBehavior";
-import { CellType } from "./types";
+import { CellType, EnumDirection } from "./types";
 import { initBoard } from "./terrain/initBoard";
 
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { onSelectAr } from "./controller/controller";
+import { moveAr } from "./controller/controller";
 import { ARButton } from 'three/examples/jsm/webxr/ARButton.js';
-import { checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree } from "./collision/collision";
+import { checkCollisionsCars, checkCollisionsRocks } from "./collision/collision";
 
 import Hammer from "hammerjs";
-
-const CANVAS_ID = 'scene'
 
 
 // let canvas: HTMLElement
@@ -105,10 +102,18 @@ const animate = () => {
     const delta = clock.getDelta();
     const elapsed = clock.getElapsedTime();
 
+    if (stats)
+        stats.update()
+
+    // TODO: fix tree collisions
+    // checkCollisionsTree(trees);
+    checkCollisionsRocks(rocks);
+    checkCollisionsCars(homeDecors);
+
     // can be used in shaders: uniforms.u_time.value = elapsed;
 
     const xrCamera = renderer.xr.getCamera();
-    console.log(xrCamera.rotation.z);
+    // console.log(xrCamera.rotation.z);
 
     renderer.render(scene, camera);
 };
@@ -147,49 +152,42 @@ function init() {
     xrButton.style.backgroundColor = 'skyblue';
     document.body.appendChild(xrButton);
 
-    xrButton.addEventListener("click", () => {
+    // ===== 🎮 CONTROLS =====
+    {
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.target.set(0, 1.6, 0);
+        controls.update();
+
+        controller = renderer.xr.getController(0);
+
         const body = document.body
-        const hammertime = new Hammer(body)
-        console.log(hammertime)
+        const hammertime = new Hammer(body);
+
+        hammertime.get('swipe').set({ direction: Hammer.DIRECTION_ALL, threshold: 100 });
 
 
-        hammertime.on("panleft", ev => {
-            ;
-            console.log("swipe left", ev);
+        hammertime.on("swipeleft", ev => {
+            moveAr(EnumDirection.LEFT)
         })
 
-
-        hammertime.on("panright", ev => {
-            console.log("swipe right", ev)
+        hammertime.on("swiperight", ev => {
+            moveAr(EnumDirection.RIGHT)
         })
 
-        hammertime.on("panup", ev => {
-            console.log("swipe up", ev)
+        hammertime.on("swipeup", ev => {
+            moveAr(EnumDirection.FORWARD)
         })
 
-        hammertime.on("pandown", ev => {
-            console.log("swipe down", ev)
+        hammertime.on("swipedown", ev => {
+            moveAr(EnumDirection.BACK)
         });
 
         hammertime.on("tap", ev => {
-            console.log("tap")
+            moveAr(EnumDirection.FORWARD)
         });
-    })
 
-    const controls = new OrbitControls(camera, renderer.domElement);
-    //controls.listenToKeyEvents(window); // optional
-    controls.target.set(0, 1.6, 0);
-    controls.update();
-
-    // Handle input: see THREE.js webxr_ar_cones
-
-    const geometry = new CylinderGeometry(0, 0.05, 0.2, 32).rotateX(Math.PI / 2);
-
-
-
-    controller = renderer.xr.getController(0);
-    controller.addEventListener('select', onSelectAr);
     scene.add(controller);
+    }
 
 
     window.addEventListener('resize', onWindowResize, false);
@@ -344,7 +342,7 @@ function init() {
 
     initBoard().then((board) => {
         board.rotation.set(0, Math.PI, 0);
-        board.position.set(0, -0.5, 0);
+        board.position.set(0, -0.7, 0);
         scene.add(board);
     });
 }

@@ -12,3 +12,10 @@ export enum CellType {
     ROCK_1,
     ROCK_2
 }
+
+export enum EnumDirection {
+    FORWARD,
+    BACK,
+    LEFT,
+    RIGHT
+}

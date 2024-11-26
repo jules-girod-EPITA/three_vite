@@ -1,6 +1,7 @@
 import { Vector3 } from "three";
 import { gsap } from "gsap";
-import {board, cube, player} from "../terrain/initBoard";
+import { board, cube, player } from "../terrain/initBoard";
+import { EnumDirection } from "../types";
 
 
 export function initController() {
@@ -8,12 +9,48 @@ export function initController() {
 }
 
 
-export const onSelectAr = (event) => {
-    console.log("clicked")
+export const moveAr = (direction: EnumDirection) => {
+
+    const translation = new Vector3();
+
+    if (!player.userData.lastMove)
+        player.userData.lastMove = new Date().getTime() - 200;
+
+    console.log(player.isDead(), new Date().getTime(), player.userData.lastMove + 200)
+
+    if (player.isDead() || player.userData.lastMove + 200 > new Date().getTime())
+        return;
+
+    switch (direction) {
+        case EnumDirection.FORWARD:
+            translation.z += 2;
+            break;
+        case EnumDirection.BACK:
+            translation.z -= 2;
+            break;
+        case EnumDirection.LEFT:
+            translation.x += 2;
+            break;
+        case EnumDirection.RIGHT:
+            translation.x -= 2;
+            break;
+        default:
+            break;
+    }
+
+    console.log(`Moving to ${direction}`)
+
+
     gsap.to(board.position, {
         duration: 0.2,
-        z: board.position.z + 2,
+        x: board.position.x + translation.x,
+        y: board.position.y + translation.y,
+        z: board.position.z + translation.z,
+        onStart: () => {
+            player.userData.lastMove = new Date().getTime();
+        }
     });
+
 }
 
 export const eventListenerMouvement = (event : KeyboardEvent) => {
