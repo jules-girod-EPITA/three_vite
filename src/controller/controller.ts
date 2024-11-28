@@ -18,6 +18,11 @@ export const moveAr = (direction: EnumDirection) => {
 
     console.log(player.isDead(), new Date().getTime(), player.userData.lastMove + 200)
 
+    if(board.position.x >= 10 && direction === EnumDirection.LEFT)
+        return;
+    if(board.position.x <= -10 && direction === EnumDirection.RIGHT)
+        return;
+
     if (player.isDead())
     {
         console.log("Trying to revive")
