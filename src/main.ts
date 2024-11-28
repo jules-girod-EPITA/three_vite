@@ -35,6 +35,7 @@ let loadingManager: LoadingManager
 export let ambientLight: AmbientLight
 
 export let camera: PerspectiveCamera
+export const listener : AudioListener = new AudioListener();
 let stats: Stats
 export let homeDecors: Object3D[] = [];
 
@@ -49,7 +50,6 @@ export const initialPlayerRotation = new Vector3(0, 0, 0);
 
 export let trees: Object3D[] = [];
 export let rocks: Object3D[] = [];
-
 
 export const playableArea = 9 * 2;
 

@@ -1,4 +1,14 @@
-import { Box3, BufferGeometry, InstancedMesh, Matrix4, Mesh, Object3D, Quaternion, Vector3 } from "three";
+import {
+    Box3,
+    BufferGeometry,
+    InstancedMesh,
+    Matrix4,
+    Mesh,
+    Object3D,
+    PositionalAudio,
+    Quaternion,
+    Vector3
+} from "three";
 import { mapWidth } from "../main";
 import { gsap } from "gsap";
 import { cube, player } from "./initBoard";
@@ -12,7 +22,7 @@ const cars: { model: string, speed: number, scale: number }[] = [
     { model: "model5.glb", speed: 1, scale: 0.5 },
     { model: "model6.glb", speed: 6, scale: 1 }];
 
-export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnPoint: Vector3, carGeometry: BufferGeometry, carModelIndex: number, translation: Vector3 = new Vector3(-(mapWidth - 1) * 2, 0, 0)) {
+export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnPoint: Vector3, carGeometry: BufferGeometry, carModelIndex: number, positionalSounds: PositionalAudio[], translation: Vector3 = new Vector3(-(mapWidth - 1) * 2, 0, 0)) {
     function doAnimation() {
         const dummyObject = new Object3D();
         const curPos = new Vector3();
@@ -34,6 +44,8 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
                 dummyObject.quaternion.copy(rotation);
                 dummyObject.scale.copy(scale);
                 dummyObject.updateMatrix();
+                // A verif si jamais ca marche pas
+                positionalSounds[index].position.copy(dummyObject.position)
                 carMesh.setMatrixAt(index, dummyObject.matrix);
                 carMesh.instanceMatrix.needsUpdate = true;
 

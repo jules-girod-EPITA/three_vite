@@ -8,13 +8,14 @@ import {
     MeshBasicMaterial,
     MeshStandardMaterial,
     Object3D,
-    PlaneGeometry,
+    PlaneGeometry, PositionalAudio,
     Quaternion,
-    Vector3
+    Vector3,
+    AudioLoader
 } from "three";
 
 
-import { homeDecors, initialPlayerPosition, initialPlayerRotation, map, mapWidth } from "../main";
+import { homeDecors, initialPlayerPosition, initialPlayerRotation, map, mapWidth, listener } from "../main";
 import { extractGeometriesAndMaterialsFromGlb, loadFbx, loadGlb } from "../loader/model_loader";
 import { generateCellConfig, Player } from "../misc";
 import { generateWorld, instancedMesh } from "./worldGeneration";
@@ -147,7 +148,28 @@ export async function initBoard(): Promise<Group> {
             const count = countCurCarsInstanced[value];
             carInstancedMeshes[value].setMatrixAt(count, new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), new Vector3(scale, scale, scale)));
             countCurCarsInstanced[value]++;
-            animateCarInstance(carInstancedMeshes[value], count, carSpawnPoint[i], carGeometry[value], value);
+
+            // TODO sound
+            const positionalSounds : PositionalAudio[]= [];
+
+            const audioLoader = new AudioLoader();
+
+            const pathSoundCar = "assets/sounds/car.mp3";
+
+            for (let i = 0; i < count; i++) {
+                const sound = new PositionalAudio(listener);
+                audioLoader.load(pathSoundCar, (buffer) => {
+                    sound.setBuffer(buffer);
+                    sound.setRefDistance(5);
+                    sound.setMaxDistance(20);
+                    sound.setVolume(0.5);
+                    sound.play();
+                });
+                positionalSounds.push(sound);
+                board.add(sound);
+            }
+
+            animateCarInstance(carInstancedMeshes[value], count, carSpawnPoint[i], carGeometry[value], value, positionalSounds);
         });
 
         carInstancedMeshes.forEach((instancedMesh) => {
