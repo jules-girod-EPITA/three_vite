@@ -118,7 +118,7 @@ const animate = () => {
     // can be used in shaders: uniforms.u_time.value = elapsed;
 
     const xrCamera = renderer.xr.getCamera();
-    // console.log(xrCamera.rotation.z);
+    board.position.y = xrCamera.position.y - 0.7;
 
     renderer.render(scene, camera);
 };
