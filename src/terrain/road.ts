@@ -12,7 +12,10 @@ const cars: { model: string, speed: number, scale: number }[] = [
     { model: "model5.glb", speed: 1, scale: 0.5 },
     { model: "model6.glb", speed: 6, scale: 1 }];
 
-export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnPoint: Vector3, carGeometry: BufferGeometry, carModelIndex: number, translation: Vector3 = new Vector3(-(mapWidth - 1) * 2, 0, 0)) {
+export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnPoint: Vector3, carGeometry: BufferGeometry, carModelIndex: number) {
+
+    const translation = new Vector3((spawnPoint.x < 0 ? 1 : -1) * (mapWidth - 1) * 2, 0, 0);
+
     function doAnimation() {
         const dummyObject = new Object3D();
         const curPos = new Vector3();
@@ -61,37 +64,37 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
                 if (playerBox.intersectsBox(carBox) && dummyObject.userData.lastCollision + 1000 < new Date().getTime()) {
                     dummyObject.userData.lastCollision = new Date().getTime();
                     player.setDeath();
-                    gsap.to(cube.rotation, {
-                        duration: 1,
-                        x: Math.PI * 2 * 8,
-                        y: Math.PI * 2 * 8,
-                        z: Math.PI * 2 * 8
-                    });
-
-                    const left = carBox.getCenter(new Vector3()).x > playerBox.getCenter(new Vector3()).x;
-
-                    gsap.to(cube.rotation, {
-                        duration: 1,
-                        x: Math.random() < 0.5 ? Math.PI / 2 : 3 * Math.PI / 2,
-                        y: 0,
-                        z: Math.random() * Math.PI * 2 * 8
-                    });
-
-                    const originalPosition = new Vector3().copy(player.position);
-                    gsap.to(player.position, {
-                        duration: 0.5,
-                        x: originalPosition.x + (cars[carModelIndex].speed * (left ? -1 : 1)),
-                        y: originalPosition.y + 1,
-                        ease: "none",
-                        onComplete: () => {
-                            gsap.to(player.position, {
-                                duration: 0.5,
-                                x: originalPosition.x + (cars[carModelIndex].speed * (left ? -1.25 : 1.25)),
-                                y: 0,
-                                ease: "none",
-                            })
-                        }
-                    });
+                    // gsap.to(cube.rotation, {
+                    //     duration: 1,
+                    //     x: Math.PI * 2 * 8,
+                    //     y: Math.PI * 2 * 8,
+                    //     z: Math.PI * 2 * 8
+                    // });
+                    //
+                    // const left = carBox.getCenter(new Vector3()).x > playerBox.getCenter(new Vector3()).x;
+                    //
+                    // gsap.to(cube.rotation, {
+                    //     duration: 1,
+                    //     x: Math.random() < 0.5 ? Math.PI / 2 : 3 * Math.PI / 2,
+                    //     y: 0,
+                    //     z: Math.random() * Math.PI * 2 * 8
+                    // });
+                    //
+                    // const originalPosition = new Vector3().copy(player.position);
+                    // gsap.to(player.position, {
+                    //     duration: 0.5,
+                    //     x: originalPosition.x + (cars[carModelIndex].speed * (left ? -1 : 1)),
+                    //     y: originalPosition.y + 1,
+                    //     ease: "none",
+                    //     onComplete: () => {
+                    //         gsap.to(player.position, {
+                    //             duration: 0.5,
+                    //             x: originalPosition.x + (cars[carModelIndex].speed * (left ? -1.25 : 1.25)),
+                    //             y: 0,
+                    //             ease: "none",
+                    //         })
+                    //     }
+                    // });
                 }
             },
             onComplete: () => {

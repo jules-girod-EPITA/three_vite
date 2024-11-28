@@ -112,7 +112,8 @@ export async function initBoard(): Promise<Group> {
 
         for (let z = 0; z < map.length; z++) {
             if (map[z][0] === CellType.ROAD) {
-                carSpawnPoint.push(new Vector3(mapWidth - 2, 0, z * 2));
+                const random = Math.random();
+                carSpawnPoint.push(new Vector3((random < 0.5 ? 1 : -1 ) * mapWidth + (random < 0.5 ? -2 : 0), 0, z * 2));
             }
         }
 
@@ -138,10 +139,14 @@ export async function initBoard(): Promise<Group> {
         carModelsByIndex.forEach((value, i) => {
             const position = carSpawnPoint[i];
             let rotation = new Euler(-Math.PI / 2, 0, -Math.PI / 2);
+            if(carSpawnPoint[i].x < 0)
+                rotation = new Euler(-Math.PI / 2, 0, Math.PI / 2);
             let scale = 0.5;
 
             if (value === 5) {
                 rotation = new Euler(0, -Math.PI / 2, 0);
+                if(carSpawnPoint[i].x < 0)
+                    rotation = new Euler(0, Math.PI / 2, 0);
                 scale = 1;
             }
             const count = countCurCarsInstanced[value];
