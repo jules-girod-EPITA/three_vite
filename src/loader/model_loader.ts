@@ -16,6 +16,7 @@ export function loadGlb(path: string, filename: string): Promise<Group> {
                     const testModel = gltf.scene as Group;
                     if (testModel != null) {
                         // console.log(`Model loaded ${filename}: `, testModel);
+                        testModel.animations = gltf.animations;
                         resolve(testModel);
                     } else {
                         // console.log("Load FAILED.");
