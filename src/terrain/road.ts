@@ -70,7 +70,7 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
                     sound.play()
                 }
 
-                if (playerWorldPosition.distanceTo(carGeneratorWorldPosition) > 0) {
+                if (playerWorldPosition.distanceTo(carGeneratorWorldPosition) > 10) {
                     // don't check of collision
                     return;
                 }
@@ -143,7 +143,7 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
         sound.setMaxDistance(2);
         sound.setVolume(1);
         sound.setLoop(true);
-        sound.play();
+        sound.stop();
     });
 
     sound.position.set(spawnPoint.x, spawnPoint.y, spawnPoint.z);
