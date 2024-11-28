@@ -8,14 +8,13 @@ import {
     MeshBasicMaterial,
     MeshStandardMaterial,
     Object3D,
-    PlaneGeometry, PositionalAudio,
+    PlaneGeometry,
     Quaternion,
-    Vector3,
-    AudioLoader
+    Vector3
 } from "three";
 
 
-import { homeDecors, initialPlayerPosition, initialPlayerRotation, map, mapWidth, listener } from "../main";
+import { homeDecors, initialPlayerPosition, initialPlayerRotation, map, mapWidth } from "../main";
 import { extractGeometriesAndMaterialsFromGlb, loadFbx, loadGlb } from "../loader/model_loader";
 import { generateCellConfig, Player } from "../misc";
 import { generateWorld, instancedMesh } from "./worldGeneration";
@@ -124,52 +123,41 @@ export async function initBoard(): Promise<Group> {
         }
 
         const nbModelCars = 6;
+        // each value in the array represent a model of car
         const carModelsByIndex = Array.from({ length: carSpawnPoint.length }, (_) => Math.floor(Math.random() * nbModelCars));
 
+
+        // [nbModel0, nbModel1, nbModel2, nbModel3, nbModel4, nbModel5]
         let countCars: number[] = carModelsByIndex.reduce((acc, value) => {
             acc[value]++;
             return acc;
         }, Array.from({ length: nbModelCars }, () => 0));
+
 
         const [carGeometry, carMaterial] = await extractGeometriesAndMaterialsFromGlb("assets/models/cars/", "model", countCars.length);
         const carInstancedMeshes = Array.from({ length: countCars.length }, (_, n) => new InstancedMesh(carGeometry[n], carMaterial[n], countCars[n]));
 
 
         let countCurCarsInstanced = Array.from({ length: countCars.length }, () => 0);
-        carModelsByIndex.forEach((value, i) => {
+
+        // for each cars not matter the model
+        carModelsByIndex.forEach((modelValue, i) => {
             const position = carSpawnPoint[i];
             let rotation = new Euler(-Math.PI / 2, 0, -Math.PI / 2);
             let scale = 0.5;
 
-            if (value === 5) {
+            if (modelValue === 5) {
                 rotation = new Euler(0, -Math.PI / 2, 0);
                 scale = 1;
             }
-            const count = countCurCarsInstanced[value];
-            carInstancedMeshes[value].setMatrixAt(count, new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), new Vector3(scale, scale, scale)));
-            countCurCarsInstanced[value]++;
 
-            // TODO sound
-            const positionalSounds : PositionalAudio[]= [];
+            // count the number of time each model of car is instanced
+            const count = countCurCarsInstanced[modelValue];
+            // carInstancedMeshes[modelValue] is the instanced mesh of the current car
+            carInstancedMeshes[modelValue].setMatrixAt(count, new Matrix4().compose(position, new Quaternion().setFromEuler(rotation), new Vector3(scale, scale, scale)));
+            countCurCarsInstanced[modelValue]++;
 
-            const audioLoader = new AudioLoader();
-
-            const pathSoundCar = "assets/sounds/car.mp3";
-
-            for (let i = 0; i < count; i++) {
-                const sound = new PositionalAudio(listener);
-                audioLoader.load(pathSoundCar, (buffer) => {
-                    sound.setBuffer(buffer);
-                    sound.setRefDistance(5);
-                    sound.setMaxDistance(20);
-                    sound.setVolume(0.5);
-                    sound.play();
-                });
-                positionalSounds.push(sound);
-                board.add(sound);
-            }
-
-            animateCarInstance(carInstancedMeshes[value], count, carSpawnPoint[i], carGeometry[value], value, positionalSounds);
+            animateCarInstance(carInstancedMeshes[modelValue], count, carSpawnPoint[i], carGeometry[modelValue], modelValue);
         });
 
         carInstancedMeshes.forEach((instancedMesh) => {

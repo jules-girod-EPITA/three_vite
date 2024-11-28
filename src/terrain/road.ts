@@ -1,4 +1,5 @@
 import {
+    AudioLoader,
     Box3,
     BufferGeometry,
     InstancedMesh,
@@ -9,9 +10,9 @@ import {
     Quaternion,
     Vector3
 } from "three";
-import { mapWidth } from "../main";
+import { listener, mapWidth } from "../main";
 import { gsap } from "gsap";
-import { cube, player } from "./initBoard";
+import { board, cube, player } from "./initBoard";
 
 
 const cars: { model: string, speed: number, scale: number }[] = [
@@ -22,7 +23,7 @@ const cars: { model: string, speed: number, scale: number }[] = [
     { model: "model5.glb", speed: 1, scale: 0.5 },
     { model: "model6.glb", speed: 6, scale: 1 }];
 
-export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnPoint: Vector3, carGeometry: BufferGeometry, carModelIndex: number, positionalSounds: PositionalAudio[], translation: Vector3 = new Vector3(-(mapWidth - 1) * 2, 0, 0)) {
+export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnPoint: Vector3, carGeometry: BufferGeometry, carModelIndex: number, translation: Vector3 = new Vector3(-(mapWidth - 1) * 2, 0, 0)) {
     function doAnimation() {
         const dummyObject = new Object3D();
         const curPos = new Vector3();
@@ -45,7 +46,7 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
                 dummyObject.scale.copy(scale);
                 dummyObject.updateMatrix();
                 // A verif si jamais ca marche pas
-                positionalSounds[index].position.copy(dummyObject.position)
+                sound.position.copy(dummyObject.position)
                 carMesh.setMatrixAt(index, dummyObject.matrix);
                 carMesh.instanceMatrix.needsUpdate = true;
 
@@ -55,8 +56,22 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
                 player.getWorldPosition(playerWorldPosition);
                 dummyObject.getWorldPosition(carGeneratorWorldPosition);
 
-                if(playerWorldPosition.distanceTo(carGeneratorWorldPosition) > 10)
+
+                // check sound
+                if (playerWorldPosition.distanceTo(carGeneratorWorldPosition) > 20 || playerWorldPosition.z > carGeneratorWorldPosition.z) {
+                    sound.setLoop(false);
+                    sound.stop();
                     return;
+                } else if (sound.isPlaying === false) {
+                    sound.setLoop(true);
+                    sound.play()
+                }
+
+                if (playerWorldPosition.distanceTo(carGeneratorWorldPosition) > 0) {
+                    // don't check of collision
+                    return;
+                }
+
 
                 const playerBox = new Box3().setFromObject(player);
 
@@ -114,6 +129,22 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
             }
         });
     }
+
+    let sound = new PositionalAudio(listener);
+    const audioLoader = new AudioLoader();
+    const pathSoundCar = "assets/sounds/car.mp3";
+    sound.position.set(spawnPoint.x, spawnPoint.y, spawnPoint.z);
+    audioLoader.load(pathSoundCar, (buffer) => {
+        sound.setBuffer(buffer);
+        sound.setRefDistance(1);
+        sound.setMaxDistance(2);
+        sound.setVolume(1);
+        sound.setLoop(true);
+        sound.play();
+    });
+
+    sound.position.set(spawnPoint.x, spawnPoint.y, spawnPoint.z);
+    board.add(sound);
 
     return new Promise(async (resolve) => {
         setTimeout(() => {

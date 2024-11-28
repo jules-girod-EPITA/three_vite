@@ -1,5 +1,6 @@
 import {
     AmbientLight,
+    AudioListener,
     Clock,
     HemisphereLight,
     LoadingManager,
@@ -151,6 +152,13 @@ function init() {
     const xrButton = ARButton.createButton(renderer, {});
     xrButton.style.backgroundColor = 'skyblue';
     document.body.appendChild(xrButton);
+
+    xrButton.addEventListener('click', () => {
+        const xrCamera = renderer.xr.getCamera();
+        xrCamera.add(listener as Object3D);
+        console.log(xrCamera)
+    })
+
 
     // ===== 🎮 CONTROLS =====
     {
