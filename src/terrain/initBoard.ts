@@ -187,13 +187,13 @@ export async function initBoard(): Promise<Group> {
     {
         const groundWidth = 20;
         const groundHeight = 150 * 2;
-        const squareSize = 2; // Size of each square in the checkerboard pattern
+        const squareSize = 2;
 
-        const lightGreenMaterial = new MeshStandardMaterial({
+        const lightGreenMaterial = new MeshBasicMaterial({
             color: '#BEF466',
             side: 2,
         });
-        const darkGreenMaterial = new MeshStandardMaterial({
+        const darkGreenMaterial = new MeshBasicMaterial({
             color: '#B7EC5E',
             side: 2,
         });
@@ -214,7 +214,7 @@ export async function initBoard(): Promise<Group> {
 
         const groundGeometry = new PlaneGeometry(groundWidth, groundHeight);
         for (let i = 0; i < 2; i++) {
-            const groundMaterialOutside = new MeshStandardMaterial({
+            const groundMaterialOutside = new MeshBasicMaterial({
                 color: '#A4D74C',
                 side: 2,
             })
