@@ -18,7 +18,7 @@ export function checkCollisionsCars(cars: Object3D[]) {
 
         if (playerBox.intersectsBox(carBox) && car.userData.lastCollision + 1000 < new Date().getTime()) {
             car.userData.lastCollision = new Date().getTime();
-            player.setDeath();
+            // player.setDeath();
             gsap.to(cube.rotation, {
                 duration: 1,
                 x: Math.PI * 2 * 8,
