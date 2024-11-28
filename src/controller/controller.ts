@@ -18,7 +18,14 @@ export const moveAr = (direction: EnumDirection) => {
 
     console.log(player.isDead(), new Date().getTime(), player.userData.lastMove + 200)
 
-    if (player.isDead() || player.userData.lastMove + 200 > new Date().getTime())
+    if (player.isDead())
+    {
+        console.log("Trying to revive")
+        player.tryRevive();
+        return;
+    }
+
+    if (player.userData.lastMove + 200 > new Date().getTime())
         return;
 
     switch (direction) {

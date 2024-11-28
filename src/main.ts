@@ -2,7 +2,7 @@ import {
     AmbientLight,
     Clock,
     HemisphereLight,
-    LoadingManager,
+    LoadingManager, Mesh, MeshBasicMaterial,
     Object3D,
     PerspectiveCamera,
     Scene,
@@ -18,7 +18,7 @@ import Stats from 'three/examples/jsm/libs/stats.module'
 import './style.css'
 import { initButtonBehavior } from "./components/buttonBehavior";
 import { CellType, EnumDirection } from "./types";
-import { initBoard } from "./terrain/initBoard";
+import { board, initBoard } from "./terrain/initBoard";
 
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { moveAr } from "./controller/controller";
@@ -26,11 +26,14 @@ import { ARButton } from 'three/examples/jsm/webxr/ARButton.js';
 import { checkCollisionsCars, checkCollisionsRocks } from "./collision/collision";
 
 import Hammer from "hammerjs";
+import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
+import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
+import { textureStore } from "three/src/nodes/accessors/StorageTextureNode";
 
 
 // let canvas: HTMLElement
 let renderer: WebGLRenderer
-let scene : Scene;
+export let scene : Scene;
 let loadingManager: LoadingManager
 export let ambientLight: AmbientLight
 
@@ -52,6 +55,8 @@ export let rocks: Object3D[] = [];
 
 
 export const playableArea = 9 * 2;
+
+export let deathText: Mesh;
 
 export const sideLength = 1
 let controller;
@@ -344,6 +349,27 @@ function init() {
         board.rotation.set(0, Math.PI, 0);
         board.position.set(0, -0.7, 0);
         scene.add(board);
+    });
+
+    const fontLoader = new FontLoader();
+    fontLoader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', (font) => {
+        const textGeometry = new TextGeometry('Wasted', {
+            font: font,
+            size: 0.1,
+            depth: 0.05,
+        });
+
+        const textMaterial = new MeshBasicMaterial({ color: 0xff0000 });
+        deathText = new Mesh(textGeometry, textMaterial);
+
+        // Positionner le texte devant la caméra
+        deathText.position.set(-0.25, 0, -1); // 50cm devant la caméra
+        deathText.rotation.x = 0;
+        deathText.rotation.y = 0;
+        deathText.visible = false;
+
+        // Ajouter à la scène
+        scene.add(deathText);
     });
 }
 
