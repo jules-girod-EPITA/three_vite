@@ -231,11 +231,11 @@ export async function initBoard(): Promise<Group> {
     }
     board.position.set(0, 0, 0);
 
-    const animal = await initAnimals();
+    const [animal, hitBox] = await initAnimals();
     animal.position.x = -4;
     animal.position.z = 6;
 
-    translateAnimal(animal, 32);
+    translateAnimal(animal, 32, hitBox);
     board.add(animal)
     return board;
 

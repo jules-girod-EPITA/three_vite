@@ -2,15 +2,12 @@ import {
     AnimationMixer, Box3,
     BoxGeometry,
     BoxHelper,
-    BufferGeometry,
     Group,
-    Material,
     Mesh,
     MeshBasicMaterial,
-    Object3D, Vector3
 } from "three";
 import { loadGlb } from "../loader/model_loader";
-import { camera, mixers, renderer } from "../main";
+import { mixers } from "../main";
 import { gsap } from "gsap";
 import { player } from "./initBoard";
 
@@ -39,11 +36,12 @@ export async function initAnimals() {
 
 
     // generate a cube above the dog
-    // const cube = new Mesh(new BoxGeometry(5.5, 1, 0.5), new MeshBasicMaterial({ color: 0x00ff00 }));
-    // const cube = new Mesh(new BoxGeometry(8, 8, 2), new MeshBasicMaterial({ color: 0x00ff00 }));
-    // cube.position.set(-0.5, 0, 0);
-    //
-    // object.add(cube);
+    const cube = new Mesh(new BoxGeometry(5.5, 1, 0.5), new MeshBasicMaterial({ color: 0x00ff00 }));
+
+    const boxHelper = new BoxHelper(cube, 0xffff00);
+    boxHelper.applyMatrix4(object.matrix)
+    boxHelper.visible = false;
+    object.add(boxHelper);
 
     object.add(dog);
     object.add(cat);
@@ -65,19 +63,28 @@ export async function initAnimals() {
             mixers.push(mixer);
         }
     }
-    return object;
+    return [object, cube];
 }
 
 
-export function translateAnimal(model: Group, translation: number) {
+export function translateAnimal(model: Group, translation: number, hitBox: Mesh) {
     gsap.to(model.position, {
         duration: 15,
         x: model.position.x + translation,
         ease: "none",
         onComplete: () => {
             model.position.x = -16;
-            translateAnimal(model, translation);
+            translateAnimal(model, translation, hitBox);
         },
+        onUpdate: () => {
+            const carBox = new Box3().setFromObject(hitBox);
+            carBox.applyMatrix4(model.matrix);
+            const playerBox = new Box3().setFromObject(player);
+
+            if (playerBox.intersectsBox(carBox)) {
+                player.setDeath();
+            }
+        }
     });
 }
 
