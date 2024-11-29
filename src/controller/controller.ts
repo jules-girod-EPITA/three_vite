@@ -41,7 +41,7 @@ export const moveAr = (direction: EnumDirection) => {
 
     if (player.userData.lastMove + 200 > new Date().getTime())
     {
-        vibrate(200);
+        // vibrate(200);
         return;
     }
 
