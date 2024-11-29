@@ -114,7 +114,6 @@ const animate = () => {
     if (stats)
         stats.update()
 
-    // TODO: fix tree collisions
     checkCollisionsTree(trees);
 
     const xrCamera = renderer.xr.getCamera();
@@ -172,7 +171,7 @@ function init() {
 
     const xrButton = ARButton.createButton(renderer, {});
     xrButton.style.backgroundColor = 'skyblue';
-    document.body.appendChild(xrButton);
+
 
     xrButton.addEventListener('click', () => {
         const xrCamera = renderer.xr.getCamera();
@@ -265,6 +264,7 @@ function init() {
         board.rotation.set(0, Math.PI, 0);
         board.position.set(0, -0.7, 0);
         scene.add(board);
+        document.body.appendChild(xrButton);
     });
 
     const fontLoader = new FontLoader();
