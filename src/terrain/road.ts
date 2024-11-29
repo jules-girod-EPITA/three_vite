@@ -25,6 +25,8 @@ const cars: { model: string, speed: number, scale: number }[] = [
 
 export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnPoint: Vector3, carGeometry: BufferGeometry, carModelIndex: number) {
 
+
+    const left = spawnPoint.x > 0;
     const translation = new Vector3((spawnPoint.x < 0 ? 1 : -1) * (mapWidth - 1) * 2, 0, 0);
 
     function doAnimation() {
@@ -50,6 +52,7 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
                 dummyObject.updateMatrix();
                 // A verif si jamais ca marche pas
                 sound.position.copy(dummyObject.position)
+                horn.position.copy(dummyObject.position)
                 carMesh.setMatrixAt(index, dummyObject.matrix);
                 carMesh.instanceMatrix.needsUpdate = true;
 
@@ -71,8 +74,11 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
                 }
 
                 // check horn
-                if (playerWorldPosition.z === carGeneratorWorldPosition.z && playerWorldPosition.distanceTo(carGeneratorWorldPosition) < 2) {
-                    horn.play();
+                if (!player.isDead() && !horn.isPlaying && Math.abs(playerWorldPosition.z - carGeneratorWorldPosition.z) < 1 && ((left && carGeneratorWorldPosition.x > playerWorldPosition.x) || (!left && carGeneratorWorldPosition.x < playerWorldPosition.x))) {
+                    if (Math.abs(carGeneratorWorldPosition.x - playerWorldPosition.x) < 6)
+                        horn.play();
+                } else {
+                    // horn.stop();
                 }
 
                 if (playerWorldPosition.distanceTo(carGeneratorWorldPosition) > 10) {
@@ -131,7 +137,7 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
         horn.setBuffer(buffer);
         horn.setRefDistance(1);
         horn.setMaxDistance(2);
-        horn.setVolume(1);
+        horn.setVolume(5);
         horn.setLoop(false);
         horn.stop();
     });
