@@ -265,6 +265,11 @@ function init() {
         board.position.set(0, -0.7, 0);
         scene.add(board);
         document.body.appendChild(xrButton);
+        const playButton = document.getElementById("play-button");
+        if(playButton)
+        {
+            playButton.innerText = "Play";
+        }
     });
 
     const fontLoader = new FontLoader();
