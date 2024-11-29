@@ -19,12 +19,12 @@ export const moveAr = (direction: EnumDirection) => {
 
     console.log(player.isDead(), new Date().getTime(), player.userData.lastMove + 200)
 
-    if(board.position.x >= 10 && direction === EnumDirection.LEFT)
+    if(board.position.x >= 16 && direction === EnumDirection.LEFT)
     {
         vibrate(200);
         return;
     }
-    if(board.position.x <= -10 && direction === EnumDirection.RIGHT)
+    if(board.position.x <= -16 && direction === EnumDirection.RIGHT)
     {
         vibrate(200);
         return;
