@@ -55,7 +55,7 @@ export let rocks: Object3D[] = [];
 export const playableArea = 9 * 2;
 
 export const sideLength = 1
-let controller;
+export let controller;
 
 initButtonBehavior();
 
@@ -168,7 +168,7 @@ function init() {
 
         controller = renderer.xr.getController(0);
 
-        const hapticActuator = controller.gamepad?.hapticActuators[0];
+
 
         const body = document.body
         const hammertime = new Hammer(body);
@@ -178,37 +178,22 @@ function init() {
 
         hammertime.on("swipeleft", ev => {
             moveAr(EnumDirection.LEFT);
-            if (hapticActuator) {
-                hapticActuator.pulse(0.5, 100);
-            }
         })
 
         hammertime.on("swiperight", ev => {
             moveAr(EnumDirection.RIGHT);
-            if (hapticActuator) {
-                hapticActuator.pulse(0.5, 100);
-            }
         })
 
         hammertime.on("swipeup", ev => {
             moveAr(EnumDirection.FORWARD);
-            if (hapticActuator) {
-                hapticActuator.pulse(0.5, 100);
-            }
         })
 
         hammertime.on("swipedown", ev => {
             moveAr(EnumDirection.BACK);
-            if (hapticActuator) {
-                hapticActuator.pulse(0.5, 100);
-            }
         });
 
         hammertime.on("tap", ev => {
             moveAr(EnumDirection.FORWARD);
-            if (hapticActuator) {
-                hapticActuator.pulse(0.5, 100);
-            }
         });
 
     scene.add(controller);

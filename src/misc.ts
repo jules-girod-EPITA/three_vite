@@ -2,7 +2,7 @@ import { CellType } from "./types";
 import { Euler, Object3D, SpotLight, Vector3 } from "three";
 import { gsap } from "gsap";
 import { ambientLight, camera, initialCameraPosition, initialPlayerPosition, initialPlayerRotation, } from "./main";
-import { eventListenerMouvement } from "./controller/controller";
+import { eventListenerMouvement, vibrate } from "./controller/controller";
 import { handleButtonClick, handleUpArrow } from "./components/buttonBehavior";
 import { board, cube, player } from "./terrain/initBoard";
 
@@ -114,6 +114,7 @@ export class Player extends Object3D {
     }
 
     setDeath() {
+        vibrate(1000);
         this.death = true;
     }
 
