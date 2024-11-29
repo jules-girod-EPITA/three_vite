@@ -1,5 +1,5 @@
 import {
-    AmbientLight,
+    AmbientLight, AnimationMixer,
     AudioListener,
     Clock,
     HemisphereLight,
@@ -29,7 +29,6 @@ import { checkCollisionsCars, checkCollisionsRocks } from "./collision/collision
 import Hammer from "hammerjs";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
-import { textureStore } from "three/src/nodes/accessors/StorageTextureNode";
 
 
 // let canvas: HTMLElement
@@ -59,6 +58,8 @@ export const playableArea = 9 * 2;
 
 export let deathText: Mesh;
 
+const clock = new Clock();
+export let mixers: AnimationMixer[] = [];
 export const sideLength = 1
 let controller;
 
@@ -108,6 +109,10 @@ const animate = () => {
     const delta = clock.getDelta();
     const elapsed = clock.getElapsedTime();
 
+    // ==== UPDATE MIXERS ====
+    for(const mixer of mixers) {
+        mixer.update(delta);
+    }
     if (stats)
         stats.update()
 
@@ -409,7 +414,7 @@ function onWindowResize() {
 
 }
 
-const clock = new Clock();
+
 
 await setupXR('immersive-ar');
 init();

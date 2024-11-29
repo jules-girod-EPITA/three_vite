@@ -22,6 +22,7 @@ import { CellType } from "../types";
 import { animateCarInstance } from "./road";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
+import { initAnimals, translateAnimal } from "./animalsGeneration";
 
 export let board: Group = new Group();
 export let cube: Object3D = await loadFbx("assets/models/", "Steve.fbx");
@@ -230,7 +231,12 @@ export async function initBoard(): Promise<Group> {
     }
     board.position.set(0, 0, 0);
 
+    const animal = await initAnimals();
+    animal.position.x = -4;
+    animal.position.z = 6;
 
+    translateAnimal(animal, 32);
+    board.add(animal)
     return board;
 
 }
