@@ -1,8 +1,10 @@
 import { CellType } from "./types";
 import { Euler, Object3D } from "three";
 import { gsap } from "gsap";
-import { deathText, scene, } from "./main";
-import { board, initBoard } from "./terrain/initBoard";
+import { deathText } from "./main";
+import { board } from "./terrain/initBoard";
+import { vibrate } from "./controller/controller";
+import { board } from "./terrain/initBoard";
 
 
 export class Player extends Object3D {
@@ -145,6 +147,7 @@ export class Player extends Object3D {
 
     setDeath() {
         if (!this.death) {
+            vibrate(1000);
             this.death = true;
             this.canRevive = false;
             this.displayDeathMessage();

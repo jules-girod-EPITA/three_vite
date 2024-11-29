@@ -61,7 +61,7 @@ export let deathText: Mesh;
 const clock = new Clock();
 export let mixers: AnimationMixer[] = [];
 export const sideLength = 1
-let controller;
+export let controller;
 
 initButtonBehavior();
 
@@ -178,6 +178,8 @@ function init() {
 
         controller = renderer.xr.getController(0);
 
+
+
         const body = document.body
         const hammertime = new Hammer(body);
 
@@ -185,23 +187,23 @@ function init() {
 
 
         hammertime.on("swipeleft", ev => {
-            moveAr(EnumDirection.LEFT)
+            moveAr(EnumDirection.LEFT);
         })
 
         hammertime.on("swiperight", ev => {
-            moveAr(EnumDirection.RIGHT)
+            moveAr(EnumDirection.RIGHT);
         })
 
         hammertime.on("swipeup", ev => {
-            moveAr(EnumDirection.FORWARD)
+            moveAr(EnumDirection.FORWARD);
         })
 
         hammertime.on("swipedown", ev => {
-            moveAr(EnumDirection.BACK)
+            moveAr(EnumDirection.BACK);
         });
 
         hammertime.on("tap", ev => {
-            moveAr(EnumDirection.FORWARD)
+            moveAr(EnumDirection.FORWARD);
         });
 
     scene.add(controller);

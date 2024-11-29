@@ -2,6 +2,7 @@ import { Vector3 } from "three";
 import { gsap } from "gsap";
 import { board, cube, player } from "../terrain/initBoard";
 import { EnumDirection } from "../types";
+import { controller } from "../main";
 
 
 export function initController() {
@@ -19,19 +20,30 @@ export const moveAr = (direction: EnumDirection) => {
     console.log(player.isDead(), new Date().getTime(), player.userData.lastMove + 200)
 
     if(board.position.x >= 10 && direction === EnumDirection.LEFT)
+    {
+        vibrate(200);
         return;
+    }
     if(board.position.x <= -10 && direction === EnumDirection.RIGHT)
+    {
+        vibrate(200);
         return;
+    }
 
     if (player.isDead())
     {
         console.log("Trying to revive")
         player.tryRevive();
+        vibrate(200);
         return;
     }
 
+
     if (player.userData.lastMove + 200 > new Date().getTime())
+    {
+        vibrate(200);
         return;
+    }
 
     switch (direction) {
         case EnumDirection.FORWARD:
@@ -139,3 +151,17 @@ export const eventListenerMouvement = (event : KeyboardEvent) => {
 
 
 };
+
+export function vibrate(duration: number)
+{
+    const hapticActuator = controller.gamepad?.hapticActuators[0];
+    if (hapticActuator) {
+        console.log("Pulse");
+        hapticActuator.pulse(0.5, duration);
+    }
+
+    if (navigator.vibrate) {
+        // Trigger the vibration
+        navigator.vibrate(duration);
+    }
+}
