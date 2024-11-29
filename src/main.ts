@@ -168,6 +168,8 @@ function init() {
 
         controller = renderer.xr.getController(0);
 
+        const hapticActuator = controller.gamepad?.hapticActuators[0];
+
         const body = document.body
         const hammertime = new Hammer(body);
 
@@ -175,23 +177,38 @@ function init() {
 
 
         hammertime.on("swipeleft", ev => {
-            moveAr(EnumDirection.LEFT)
+            moveAr(EnumDirection.LEFT);
+            if (hapticActuator) {
+                hapticActuator.pulse(0.5, 100);
+            }
         })
 
         hammertime.on("swiperight", ev => {
-            moveAr(EnumDirection.RIGHT)
+            moveAr(EnumDirection.RIGHT);
+            if (hapticActuator) {
+                hapticActuator.pulse(0.5, 100);
+            }
         })
 
         hammertime.on("swipeup", ev => {
-            moveAr(EnumDirection.FORWARD)
+            moveAr(EnumDirection.FORWARD);
+            if (hapticActuator) {
+                hapticActuator.pulse(0.5, 100);
+            }
         })
 
         hammertime.on("swipedown", ev => {
-            moveAr(EnumDirection.BACK)
+            moveAr(EnumDirection.BACK);
+            if (hapticActuator) {
+                hapticActuator.pulse(0.5, 100);
+            }
         });
 
         hammertime.on("tap", ev => {
-            moveAr(EnumDirection.FORWARD)
+            moveAr(EnumDirection.FORWARD);
+            if (hapticActuator) {
+                hapticActuator.pulse(0.5, 100);
+            }
         });
 
     scene.add(controller);
