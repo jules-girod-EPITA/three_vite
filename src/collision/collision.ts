@@ -1,61 +1,20 @@
-import { Box3, BoxHelper, Object3D, Vector3 } from "three";
+import {
+    Box3,
+    BoxHelper, BufferGeometry,
+    EdgesGeometry, Line,
+    LineBasicMaterial,
+    LineSegments,
+    Mesh,
+    Object3D,
+    Triangle,
+    Vector3
+} from "three";
 import { gsap } from "gsap";
-import { board, cube, player } from "../terrain/initBoard";
+import { cube, player } from "../terrain/initBoard";
 
-
-export function checkCollisionsCars(cars: Object3D[]) {
-    if(player.done)
-        return;
-
-    const playerBox = new Box3().setFromObject(player);
-
-    cars.forEach((car, index) => {
-        const carBox = new Box3().setFromObject(car);
-
-        if (!car.userData.lastCollision) {
-            car.userData.lastCollision = new Date().getTime() - 1000;
-        }
-
-        if (playerBox.intersectsBox(carBox) && car.userData.lastCollision + 1000 < new Date().getTime()) {
-            car.userData.lastCollision = new Date().getTime();
-            // player.setDeath();
-            gsap.to(cube.rotation, {
-                duration: 1,
-                x: Math.PI * 2 * 8,
-                y: Math.PI * 2 * 8,
-                z: Math.PI * 2 * 8
-            });
-
-            const left = carBox.getCenter(new Vector3()).x > playerBox.getCenter(new Vector3()).x;
-
-            gsap.to(cube.rotation, {
-                duration: 1,
-                x: Math.random() < 0.5 ? Math.PI / 2 : 3 * Math.PI / 2,
-                y: 0,
-                z: Math.random() * Math.PI * 2 * 8
-            });
-
-            const originalPosition = new Vector3().copy(player.position);
-            gsap.to(player.position, {
-                duration: 0.5,
-                x: originalPosition.x + (left ? -car.userData.speed : car.userData.speed),
-                y: originalPosition.y + 1,
-                ease: "none",
-                onComplete: () => {
-                    gsap.to(player.position, {
-                        duration: 0.5,
-                        x: originalPosition.x + (left ? -car.userData.speed * 1.25 : car.userData.speed * 1.25),
-                        y: 0,
-                        ease: "none",
-                    })
-                }
-            });
-        }
-    });
-}
 
 export function checkCollisionsTree(trees: Object3D[]) {
-    if(player.done)
+    if(player.isDead())
         return;
 
     trees.forEach((tree) => {
@@ -79,8 +38,10 @@ export function checkCollisionsTree(trees: Object3D[]) {
 }
 
 export function checkCollisionsRocks(rocks: Object3D[]) {
-    if(player.done)
+    if(player.isDead())
         return;
+
+
     rocks.forEach((rock) => {
         const rockPosition = rock.getWorldPosition(new Vector3());
         const playerPosition = player.getWorldPosition(new Vector3());

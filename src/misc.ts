@@ -8,7 +8,6 @@ import { board } from "./terrain/initBoard";
 
 
 export class Player extends Object3D {
-    public done: boolean = false;
     private readonly onUpdate: () => void;
     private death: boolean = false;
     private canRevive: boolean = false;

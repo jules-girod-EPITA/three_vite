@@ -1,7 +1,7 @@
 import {
     AmbientLight, AnimationMixer,
     AudioListener,
-    Clock,
+    Clock, Group,
     HemisphereLight,
     LoadingManager, Mesh, MeshBasicMaterial,
     Object3D,
@@ -24,7 +24,7 @@ import { board, initBoard } from "./terrain/initBoard";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { moveAr } from "./controller/controller";
 import { ARButton } from 'three/examples/jsm/webxr/ARButton.js';
-import { checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree } from "./collision/collision";
+import { checkCollisionsRocks, checkCollisionsTree } from "./collision/collision";
 
 import Hammer from "hammerjs";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
@@ -40,7 +40,6 @@ export let ambientLight: AmbientLight
 export let camera: PerspectiveCamera
 export const listener : AudioListener = new AudioListener();
 let stats: Stats
-export let homeDecors: Object3D[] = [];
 
 export const mapLength = 100;
 export const mapWidth = 18;
@@ -119,7 +118,6 @@ const animate = () => {
     // TODO: fix tree collisions
     checkCollisionsTree(trees);
     // checkCollisionsRocks(rocks);
-    // checkCollisionsCars(homeDecors);
 
     const xrCamera = renderer.xr.getCamera();
     board.position.y = xrCamera.position.y - 0.7;

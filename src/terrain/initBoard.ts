@@ -14,7 +14,7 @@ import {
 } from "three";
 
 
-import { homeDecors, initialPlayerPosition, initialPlayerRotation, map, mapWidth } from "../main";
+import { crash_site, homeDecors, initialPlayerPosition, initialPlayerRotation, map, mapWidth } from "../main";
 import { extractGeometriesAndMaterialsFromGlb, loadFbx, loadGlb } from "../loader/model_loader";
 import { generateCellConfig, Player } from "../misc";
 import { generateWorld, instancedMesh } from "./worldGeneration";
@@ -42,46 +42,6 @@ export async function initBoard(): Promise<Group> {
 
     // scene.add(mesh);
     board.add(player);
-
-    const meshesWithoutCollision = ["Street", "Tree_1002"];
-    try {
-        const crash_site = await loadGlb("assets/models/scene/", "crash_scene_2.glb");
-        crash_site.traverse((child) => {
-            if (child instanceof Mesh) {
-                // get collision box
-                // get if the mesh is a collision box
-
-                if (!meshesWithoutCollision.some((meshName) => { return child.name.includes(meshName) })) {
-                    child.userData.speed = 1;
-                    homeDecors.push(child as Object3D);
-                }
-            }
-        })
-
-        board.add(crash_site);
-    } catch (error) {
-        console.error("An error happened while loading model:", error);
-    }
-
-    try {
-        let hospital_site = await loadGlb("assets/models/scene/", "hospital_scene.glb");
-        hospital_site.traverse((child) => {
-            if (child instanceof Mesh) {
-
-                if (!meshesWithoutCollision.some((meshName) => { return child.name.includes(meshName) })) {
-                    child.userData.speed = 1;
-                    homeDecors.push(child as Object3D);
-                }
-            }
-        })
-
-        hospital_site.position.set(4, 0, 103 * 2);
-        hospital_site.rotateY(Math.PI)
-
-        board.add(hospital_site);
-    } catch (error) {
-        console.error("An error happened while loading model:", error);
-    }
 
     let countRoads = [0];
     let countTrees = [0, 0, 0];
