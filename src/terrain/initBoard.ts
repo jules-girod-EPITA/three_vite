@@ -14,8 +14,12 @@ import {
 } from "three";
 
 
-import { crash_site, homeDecors, initialPlayerPosition, initialPlayerRotation, map, mapWidth } from "../main";
-import { extractGeometriesAndMaterialsFromGlb, loadFbx, loadGlb } from "../loader/model_loader";
+import { initialPlayerPosition, initialPlayerRotation, map, mapLength, mapWidth, trees } from "../main";
+import {
+    extractGeometriesAndMaterialsFromGlb,
+    extractGeometryAndMaterialFromModel,
+    loadFbx
+} from "../loader/model_loader";
 import { generateCellConfig, Player } from "../misc";
 import { generateWorld, instancedMesh } from "./worldGeneration";
 import { CellType } from "../types";
@@ -81,6 +85,7 @@ export async function initBoard(): Promise<Group> {
         for (let i = 0; i < carSpawnPoint.length; i++) {
             const cube = new Mesh(new BoxGeometry(1, 1, 1), new MeshStandardMaterial({ color: 'red' }));
             cube.position.set(carSpawnPoint[i].x, carSpawnPoint[i].y, carSpawnPoint[i].z);
+            cube.visible = false;
             board.add(cube);
         }
 
@@ -130,6 +135,10 @@ export async function initBoard(): Promise<Group> {
             instancedMesh.position.set(0, 0.1, 0);
             board.add(instancedMesh);
         });
+
+
+        /// === outline trees === ///
+        await initBorderTrees(cellConfig);
     }
 
     // === 📦 FBX OBJECT ===
@@ -218,4 +227,39 @@ async function addHighScoreText(board: Group, text: string, x: number, y: number
     textMesh.rotation.x = Math.PI / 2;
     textMesh.rotation.y = Math.PI;
     board.add(textMesh);
+}
+
+async function initBorderTrees(cellConfig : ReturnType<typeof generateCellConfig>)
+{
+    const { geometry, material } = extractGeometryAndMaterialFromModel(
+        await loadFbx("assets/models/props/", "Tree_1.fbx")
+    );
+    const instancedMeshTree = new InstancedMesh(geometry, material, mapWidth * 2 +2);
+    const scaleX = cellConfig[CellType.TREE_1]?.scaleX || 1;
+    const scaleY = cellConfig[CellType.TREE_1]?.scaleY || 1
+    const scaleZ = cellConfig[CellType.TREE_1]?.scaleZ || 1;
+
+
+    // let do the outline left and right
+    const dummy = new Object3D();
+
+    for (let j = 0; j <= mapWidth*2; j+=2) {
+        instancedMeshTree.setMatrixAt(j, new Matrix4().compose(new Vector3(j - mapWidth, 0,-2), new Quaternion(), new Vector3(scaleX, scaleY, scaleZ)));
+        instancedMeshTree.getMatrixAt(j, dummy.matrix);
+        const tempMesh = new Mesh(geometry);
+        tempMesh.applyMatrix4(dummy.matrix);
+        tempMesh.position.x -= mapWidth;
+        trees.push(tempMesh as Object3D);
+
+
+        instancedMeshTree.setMatrixAt(j+1, new Matrix4().compose(new Vector3(j - mapWidth, 0, mapLength*2), new Quaternion(), new Vector3(scaleX, scaleY, scaleZ)));
+        instancedMeshTree.getMatrixAt(j+1, dummy.matrix);
+        const tempMesh2 = new Mesh(geometry);
+        tempMesh2.applyMatrix4(dummy.matrix);
+        tempMesh2.position.x -= mapWidth;
+        trees.push(tempMesh2 as Object3D);
+    }
+
+    instancedMeshTree.position.set(0, 0.1, 0);
+    board.add(instancedMeshTree);
 }

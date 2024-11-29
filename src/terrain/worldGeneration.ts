@@ -1,18 +1,7 @@
-import { map, mapLength, mapWidth, rocks, trees } from "../main";
+import { map, mapLength, mapWidth, trees } from "../main";
 import { CellType } from "../types";
 import { extractGeometriesAndMaterialsFromFbx } from "../loader/model_loader";
-import {
-    BoxHelper,
-    BufferGeometry,
-    Euler,
-    InstancedMesh,
-    Material,
-    Matrix4,
-    Mesh,
-    Object3D,
-    Quaternion,
-    Vector3
-} from "three";
+import { BufferGeometry, Euler, InstancedMesh, Material, Matrix4, Mesh, Object3D, Quaternion, Vector3 } from "three";
 import { generateCellConfig } from "../misc";
 import { board } from "./initBoard";
 
@@ -83,6 +72,25 @@ export function generateWorld(countRoads: number[], countTrees: number[], countD
             }
         }
     }
+    for (let z = 0; z < map.length; z++) {
+        for (let x = 0; x < 4; x++) {
+            if (map[z][0] !== CellType.ROAD) {
+                // random between 0, 1, 2
+                const random = Math.floor(Math.random() * 3);
+                map[z][x] = CellType.TREE_1 + random;
+                countTrees[random]++;
+
+                const random2 = Math.floor(Math.random() * 3);
+                map[z][map[z].length - x] = CellType.TREE_1 + random;
+                countTrees[random]++;
+            }
+        }
+        if (map[z][0] !== CellType.ROAD) {
+            const random = Math.floor(Math.random() * 3);
+            map[z][map[z].length - 4] = CellType.TREE_1 + random;
+            countTrees[random]++;
+        }
+    }
 }
 
 
@@ -123,9 +131,9 @@ export async function instancedMesh(path: string, fileName: string, modelCount: 
             }
         }
     }
-    if(fileName === "DeadTree_" || fileName === "Tree_" || fileName === "Rock_")
+    if (fileName === "DeadTree_" || fileName === "Tree_")
     {
-        addCollision(modelGeometries, instancedMeshes, modelCount, fileName !== "Rock_");
+        addCollision(modelGeometries, instancedMeshes, modelCount);
     }
 }
 
@@ -133,8 +141,6 @@ export function instantiateMesh(cellConfig: ReturnType<typeof generateCellConfig
     const config = cellConfig[cellType];
     if (config === null)
         return;
-
-    console.log(cellType, meshIndex)
 
     const position = new Vector3(x * 2 + (config.randomPosition ? Math.random() : 0), 0, z * 2 + (config.randomPosition ? Math.random() : 0));
     const rotation = config.randomRotation ? new Euler(0, (Math.random() < 0.5 ? 1 : 0) * Math.PI, 0) : config.rotation || new Euler();
@@ -146,7 +152,7 @@ export function instantiateMesh(cellConfig: ReturnType<typeof generateCellConfig
     indexArray[meshIndex]++;
 }
 
-function addCollision(geometries: BufferGeometry[] | (Material | Material[])[], meshes: InstancedMesh[], countDiffElement: number[], isTree: boolean) {
+function addCollision(geometries: BufferGeometry[] | (Material | Material[])[], meshes: InstancedMesh[], countDiffElement: number[]) {
     const dummy = new Object3D();
     for (let i = 0; i < countDiffElement.length; i++) {
         for (let j = 0; j < countDiffElement[i]; j++) {
@@ -158,16 +164,9 @@ function addCollision(geometries: BufferGeometry[] | (Material | Material[])[], 
             // TODO REMOVE : Create a BoxHelper for this temporary mesh
             // const boundingBoxHelper = new BoxHelper(tempMesh, 0xffff00); // Yellow color
 
-            if (isTree) {
-
-                trees.push(tempMesh as Object3D);
-                // const boxHelper = new BoxHelper(tempMesh, 0xffff00);
-                // board.add(boxHelper);
-            }
-            else
-                rocks.push(tempMesh as Object3D);
-
-            // board.add(boundingBoxHelper);
+            trees.push(tempMesh as Object3D);
+            // const boxHelper = new BoxHelper(tempMesh, 0xffff00);
+            // board.add(boxHelper);
         }
     }
 }
