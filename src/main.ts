@@ -121,10 +121,25 @@ const animate = () => {
     // checkCollisionsRocks(rocks);
     // checkCollisionsCars(homeDecors);
 
-    // can be used in shaders: uniforms.u_time.value = elapsed;
-
     const xrCamera = renderer.xr.getCamera();
     board.position.y = xrCamera.position.y - 0.7;
+
+    if(deathText?.visible)
+    {
+        // applying math transformation to always keep the text in front of the camera (offset to center eat)
+        const distanceFromCamera = 1;
+        const cameraDirection = new Vector3();
+        camera.getWorldDirection(cameraDirection);
+        const textPosition = new Vector3();
+        deathText.getWorldPosition(textPosition);
+
+
+        camera.position.x -= 0.25;
+        camera.position.y = textPosition.y;
+
+        deathText.position.copy(camera.position).add(cameraDirection.multiplyScalar(distanceFromCamera));
+        deathText.lookAt(camera.position);
+    }
 
     renderer.render(scene, camera);
 };
