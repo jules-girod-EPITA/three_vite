@@ -12,7 +12,7 @@ import {
 } from "three";
 import { listener, mapWidth } from "../main";
 import { gsap } from "gsap";
-import { board, cube, player } from "./initBoard";
+import { board, player } from "./initBoard";
 
 
 const cars: { model: string, speed: number, scale: number }[] = [
@@ -91,37 +91,6 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
                 if (playerBox.intersectsBox(carBox) && dummyObject.userData.lastCollision + 1000 < new Date().getTime()) {
                     dummyObject.userData.lastCollision = new Date().getTime();
                     player.setDeath();
-                    // gsap.to(cube.rotation, {
-                    //     duration: 1,
-                    //     x: Math.PI * 2 * 8,
-                    //     y: Math.PI * 2 * 8,
-                    //     z: Math.PI * 2 * 8
-                    // });
-                    //
-                    // const left = carBox.getCenter(new Vector3()).x > playerBox.getCenter(new Vector3()).x;
-                    //
-                    // gsap.to(cube.rotation, {
-                    //     duration: 1,
-                    //     x: Math.random() < 0.5 ? Math.PI / 2 : 3 * Math.PI / 2,
-                    //     y: 0,
-                    //     z: Math.random() * Math.PI * 2 * 8
-                    // });
-                    //
-                    // const originalPosition = new Vector3().copy(player.position);
-                    // gsap.to(player.position, {
-                    //     duration: 0.5,
-                    //     x: originalPosition.x + (cars[carModelIndex].speed * (left ? -1 : 1)),
-                    //     y: originalPosition.y + 1,
-                    //     ease: "none",
-                    //     onComplete: () => {
-                    //         gsap.to(player.position, {
-                    //             duration: 0.5,
-                    //             x: originalPosition.x + (cars[carModelIndex].speed * (left ? -1.25 : 1.25)),
-                    //             y: 0,
-                    //             ease: "none",
-                    //         })
-                    //     }
-                    // });
                 }
             },
             onComplete: () => {
