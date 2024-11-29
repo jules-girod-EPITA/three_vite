@@ -7,7 +7,7 @@ import {
     MeshBasicMaterial,
 } from "three";
 import { loadGlb } from "../loader/model_loader";
-import { mixers } from "../main";
+import { mapWidth, mixers } from "../main";
 import { gsap } from "gsap";
 import { player } from "./initBoard";
 
@@ -63,17 +63,19 @@ export async function initAnimals() {
             mixers.push(mixer);
         }
     }
+    // object.position.x = -4;
+    object.position.z = 6;
     return [object, cube];
 }
 
 
 export function translateAnimal(model: Group, translation: number, hitBox: Mesh) {
     gsap.to(model.position, {
-        duration: 15,
+        duration: 10,
         x: model.position.x + translation,
         ease: "none",
         onComplete: () => {
-            model.position.x = -16;
+            model.position.x = -8;
             translateAnimal(model, translation, hitBox);
         },
         onUpdate: () => {

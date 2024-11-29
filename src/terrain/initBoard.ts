@@ -14,7 +14,14 @@ import {
 } from "three";
 
 
-import { initialPlayerPosition, initialPlayerRotation, map, mapLength, mapWidth, trees } from "../main";
+import {
+    initialPlayerPosition,
+    initialPlayerRotation,
+    map,
+    mapLength,
+    mapWidth,
+    trees
+} from "../main";
 import {
     extractGeometriesAndMaterialsFromGlb,
     extractGeometryAndMaterialFromModel,
@@ -28,6 +35,9 @@ import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
 import { initAnimals, translateAnimal } from "./animalsGeneration";
 
+
+export let animals = new Group();
+export let hitBox;
 export let board: Group = new Group();
 export let cube: Object3D = await loadFbx("assets/models/", "Steve.fbx");
 export let player: Player = new Player();
@@ -200,11 +210,10 @@ export async function initBoard(): Promise<Group> {
     }
     board.position.set(0, 0, 0);
 
-    const [animal, hitBox] = await initAnimals();
-    animal.position.x = -4;
-    animal.position.z = 6;
+    const [animal, hitBox2] = await initAnimals();
 
-    translateAnimal(animal, 32, hitBox);
+    animals = animal;
+    hitBox = hitBox2;
     board.add(animal)
     return board;
 

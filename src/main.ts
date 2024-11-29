@@ -19,7 +19,7 @@ import Stats from 'three/examples/jsm/libs/stats.module'
 import './style.css'
 import { initButtonBehavior } from "./components/buttonBehavior";
 import { CellType, EnumDirection } from "./types";
-import { board, initBoard } from "./terrain/initBoard";
+import { animals, board, hitBox, initBoard } from "./terrain/initBoard";
 
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { moveAr } from "./controller/controller";
@@ -29,10 +29,12 @@ import { checkCollisionsTree } from "./collision/collision";
 import Hammer from "hammerjs";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
+import { translateAnimal } from "./terrain/animalsGeneration";
 
 
 // let canvas: HTMLElement
 let renderer: WebGLRenderer
+
 export let scene : Scene;
 let loadingManager: LoadingManager
 export let ambientLight: AmbientLight
@@ -176,6 +178,7 @@ function init() {
         const xrCamera = renderer.xr.getCamera();
         xrCamera.add(listener as Object3D);
         console.log(xrCamera)
+        translateAnimal(animals, 9*2, hitBox);
     })
 
 
