@@ -4,7 +4,6 @@ import { gsap } from "gsap";
 import { deathText, mixers } from "./main";
 import { board } from "./terrain/initBoard";
 import { vibrate } from "./controller/controller";
-import { board } from "./terrain/initBoard";
 
 
 export class Player extends Object3D {
@@ -287,7 +286,10 @@ export function addAnimation(model : Object3D, ...animationsNames: string[])
 
         if (indexAnimation !== -1) {
             const action = mixerHumain.clipAction(model.animations[indexAnimation]);
-            action.play();
+            setTimeout(() => {
+                action.play();
+            }, 2500 * Math.random());
+
             mixers.push(mixerHumain);
             return;
         }

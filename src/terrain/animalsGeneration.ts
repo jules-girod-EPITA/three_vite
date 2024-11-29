@@ -1,15 +1,7 @@
-import {
-    AnimationMixer, Box3,
-    BoxGeometry,
-    BoxHelper,
-    Group,
-    Mesh,
-    MeshBasicMaterial, Object3D, Vector3,
-} from "three";
+import { Box3, BoxGeometry, BoxHelper, Group, Mesh, MeshBasicMaterial, Object3D, } from "three";
 import { loadFbx, loadGlb } from "../loader/model_loader";
-import { mapWidth, mixers, trees } from "../main";
 import { gsap } from "gsap";
-import { animals, board, hitBox, player } from "./initBoard";
+import { player } from "./initBoard";
 import { addAnimation } from "../misc";
 
 export async function initAnimals() {
@@ -95,6 +87,14 @@ export async function petDog()
     addAnimation(dog, "AnimalArmature|AnimalArmature|AnimalArmature|Headbutt")
 
     return object;
+}
+
+export async function sheepEating() {
+    const sheep = await loadAnimalModelGlb("sheep.glb");
+    sheep.position.set(0.55, 0, 0.4);
+
+    addAnimation(sheep, "AnimalArmature|AnimalArmature|AnimalArmature|Idle_Eating")
+    return sheep;
 }
 
 export function translateAnimal(model: Group, translation: number, hitBox: Mesh) {

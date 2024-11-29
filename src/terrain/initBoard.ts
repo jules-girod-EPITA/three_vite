@@ -1,5 +1,5 @@
 import {
-    BoxGeometry, BoxHelper,
+    BoxGeometry,
     Euler,
     Group,
     InstancedMesh,
@@ -14,14 +14,7 @@ import {
 } from "three";
 
 
-import {
-    initialPlayerPosition,
-    initialPlayerRotation,
-    map,
-    mapLength,
-    mapWidth,
-    trees
-} from "../main";
+import { initialPlayerPosition, initialPlayerRotation, map, mapLength, mapWidth, trees } from "../main";
 import {
     extractGeometriesAndMaterialsFromGlb,
     extractGeometryAndMaterialFromModel,
@@ -33,7 +26,7 @@ import { CellType } from "../types";
 import { animateCarInstance } from "./road";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
-import { initAnimals, petDog, translateAnimal } from "./animalsGeneration";
+import { initAnimals, petDog, sheepEating } from "./animalsGeneration";
 
 
 export let animals = new Group();
@@ -216,16 +209,43 @@ export async function initBoard(): Promise<Group> {
     hitBox = hitBox2;
     board.add(animal)
 
+    const alreadyEatingSheep: Vector3[] = [];
 
-    const pettingAnimal = await petDog();
-    pettingAnimal.position.set(-6, 0, 4);
-    board.add(pettingAnimal);
+    function generateToRandomCoordNotAlreadyUsed() {
+        let randomX = -99;
+        let randomZ = -99;
+        let count = 0;
+        while (count < 25 && (randomX === -99 || randomZ === -99 || randomX === 0 || randomZ === animal.position.z || alreadyEatingSheep.find((value) => value.x === randomX && value.z === randomZ))) {
+            randomX = Math.floor(Math.random() * 10) * 2 - 8;
+            randomZ = Math.floor(Math.random() * 5) * 2;
+            count++;
+        }
+        if (count === 25) {
+            randomX = 2;
+            randomZ = 2;
+            console.error(`Could not find a random coord in ${count} tries`);
+        }
+        alreadyEatingSheep.push(new Vector3(randomX, 0, randomZ));
+        return { randomX, randomZ };
+    }
+
+    for (let i = 0; i < 2; i++) {
+        const pettingAnimal = await petDog();
+        const { randomX, randomZ } = generateToRandomCoordNotAlreadyUsed();
+
+        pettingAnimal.position.set(randomX, 0, randomZ);
+        board.add(pettingAnimal);
+    }
 
 
-    const pettingAnimal2 = await petDog();
-    pettingAnimal2.position.set(2, 0, 8);
-    pettingAnimal2.lookAt(0, 0, 0);
-    board.add(pettingAnimal2);
+    for (let i = 0; i < 15; i++) {
+        const sheep = await sheepEating();
+        const { randomX, randomZ } = generateToRandomCoordNotAlreadyUsed();
+        sheep.position.set(randomX, 0, randomZ);
+        sheep.rotation.y = Math.random() * Math.PI * 2;
+        board.add(sheep);
+    }
+
 
     return board;
 
