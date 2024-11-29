@@ -70,6 +70,11 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
                     sound.play()
                 }
 
+                // check horn
+                if (playerWorldPosition.z === carGeneratorWorldPosition.z && playerWorldPosition.distanceTo(carGeneratorWorldPosition) < 2) {
+                    horn.play();
+                }
+
                 if (playerWorldPosition.distanceTo(carGeneratorWorldPosition) > 10) {
                     // don't check of collision
                     return;
@@ -103,9 +108,16 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
     }
 
     let sound = new PositionalAudio(listener);
+    let horn = new PositionalAudio(listener);
+
     const audioLoader = new AudioLoader();
+
     const pathSoundCar = "assets/sounds/car.mp3";
+    const pathSoundHorn = "assets/sounds/horn.mp3";
+
     sound.position.set(spawnPoint.x, spawnPoint.y, spawnPoint.z);
+    horn.position.set(spawnPoint.x, spawnPoint.y, spawnPoint.z);
+
     audioLoader.load(pathSoundCar, (buffer) => {
         sound.setBuffer(buffer);
         sound.setRefDistance(1);
@@ -115,8 +127,17 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
         sound.stop();
     });
 
-    sound.position.set(spawnPoint.x, spawnPoint.y, spawnPoint.z);
+    audioLoader.load(pathSoundHorn, (buffer) => {
+        horn.setBuffer(buffer);
+        horn.setRefDistance(1);
+        horn.setMaxDistance(2);
+        horn.setVolume(1);
+        horn.setLoop(false);
+        horn.stop();
+    });
+
     board.add(sound);
+    board.add(horn);
 
     return new Promise(async (resolve) => {
         setTimeout(() => {
