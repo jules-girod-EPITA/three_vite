@@ -24,7 +24,7 @@ import { board, initBoard } from "./terrain/initBoard";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { moveAr } from "./controller/controller";
 import { ARButton } from 'three/examples/jsm/webxr/ARButton.js';
-import { checkCollisionsCars, checkCollisionsRocks } from "./collision/collision";
+import { checkCollisionsCars, checkCollisionsRocks, checkCollisionsTree } from "./collision/collision";
 
 import Hammer from "hammerjs";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
@@ -117,9 +117,9 @@ const animate = () => {
         stats.update()
 
     // TODO: fix tree collisions
-    // checkCollisionsTree(trees);
-    checkCollisionsRocks(rocks);
-    checkCollisionsCars(homeDecors);
+    checkCollisionsTree(trees);
+    // checkCollisionsRocks(rocks);
+    // checkCollisionsCars(homeDecors);
 
     // can be used in shaders: uniforms.u_time.value = elapsed;
 

@@ -1,6 +1,6 @@
-import { Box3, Object3D, Vector3 } from "three";
+import { Box3, BoxHelper, Object3D, Vector3 } from "three";
 import { gsap } from "gsap";
-import { cube, player } from "../terrain/initBoard";
+import { board, cube, player } from "../terrain/initBoard";
 
 
 export function checkCollisionsCars(cars: Object3D[]) {
@@ -62,50 +62,18 @@ export function checkCollisionsTree(trees: Object3D[]) {
         const treePosition = tree.getWorldPosition(new Vector3());
         const playerPosition = player.getWorldPosition(new Vector3());
         const distance = treePosition.distanceTo(playerPosition);
+        const box = new Box3().setFromObject(tree);
+
+        // const boxHelper = new BoxHelper(tree, 0xffff00);
+        // board.add(boxHelper);
 
         if (!tree.userData.hasCollided) {
             tree.userData.hasCollided = new Date().getTime() - 4000;
         }
 
-        if (distance < 0.5 && tree.userData.hasCollided + 4000 < new Date().getTime()) {
+        if (distance < 10 && box.intersectsBox(new Box3().setFromObject(player)) && tree.userData.hasCollided + 4000 < new Date().getTime()) {
             player.setDeath();
             tree.userData.hasCollided = new Date().getTime();
-            gsap.to(cube.rotation, {
-                duration: 1,
-                x: Math.PI * 2 * 8,
-                y: Math.PI * 2 * 8,
-                z: Math.PI * 2 * 8
-            });
-
-            const left = treePosition.x === playerPosition.x ? 0 : treePosition.x > playerPosition.x ? 1 : -1;
-            const front = treePosition.z === playerPosition.z ? 0 : treePosition.z > playerPosition.z ? 1 : -1;
-
-            gsap.to(cube.rotation, {
-                duration: 1,
-                x: Math.random() < 0.5 ? Math.PI / 2 : 3 * Math.PI / 2,
-                y: 0,
-                z: Math.random() * Math.PI * 2 * 8
-            });
-
-            const originalPosition = new Vector3().copy(player.position);
-            const middPosition = originalPosition.clone().add(new Vector3(-left, 1, -front))
-            const endPosition = originalPosition.clone().add(new Vector3(-left * 1.75, 0, -front * 1.75))
-            gsap.to(player.position, {
-                duration: 0.5,
-                x: middPosition.x,
-                y: middPosition.y,
-                z: middPosition.z,
-                ease: "none",
-                onComplete: () => {
-                    gsap.to(player.position, {
-                        duration: 0.5,
-                        x: endPosition.x,
-                        y: 0,
-                        z: endPosition.z,
-                        ease: "none",
-                    })
-                }
-            });
         }
     });
 }
