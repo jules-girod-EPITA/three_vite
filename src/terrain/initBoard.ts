@@ -1,5 +1,5 @@
 import {
-    BoxGeometry,
+    BoxGeometry, BoxHelper,
     Euler,
     Group,
     InstancedMesh,
@@ -33,7 +33,7 @@ import { CellType } from "../types";
 import { animateCarInstance } from "./road";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
-import { initAnimals, translateAnimal } from "./animalsGeneration";
+import { initAnimals, petDog, translateAnimal } from "./animalsGeneration";
 
 
 export let animals = new Group();
@@ -215,6 +215,18 @@ export async function initBoard(): Promise<Group> {
     animals = animal;
     hitBox = hitBox2;
     board.add(animal)
+
+
+    const pettingAnimal = await petDog();
+    pettingAnimal.position.set(-6, 0, 4);
+    board.add(pettingAnimal);
+
+
+    const pettingAnimal2 = await petDog();
+    pettingAnimal2.position.set(2, 0, 8);
+    pettingAnimal2.lookAt(0, 0, 0);
+    board.add(pettingAnimal2);
+
     return board;
 
 }

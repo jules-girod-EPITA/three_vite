@@ -18,7 +18,7 @@ export function generateWorld(countRoads: number[], countTrees: number[], countD
     // [56 - 66[ = Flowers
     // [66 - 68.5[ = Rock
     // [68.5 - 100] =  empty
-    for (let z = 4; z < randomMap.length; z++) {
+    for (let z = 5; z < randomMap.length; z++) {
         if (randomMap[z][0] <= 50) {
             randomMap[z] = Array.from({ length: mapWidth }, () => -1);
         }

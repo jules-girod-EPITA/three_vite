@@ -1,7 +1,7 @@
 import { CellType } from "./types";
-import { Euler, Object3D } from "three";
+import { AnimationMixer, Euler, Object3D } from "three";
 import { gsap } from "gsap";
-import { deathText } from "./main";
+import { deathText, mixers } from "./main";
 import { board } from "./terrain/initBoard";
 import { vibrate } from "./controller/controller";
 import { board } from "./terrain/initBoard";
@@ -275,4 +275,24 @@ export function generateCellConfig() {
         [CellType.Empty]: null,
     };
     return cellConfig;
+}
+
+
+export function addAnimation(model : Object3D, ...animationsNames: string[])
+{
+    let mixerHumain = new AnimationMixer(model);
+    for(const animationName of animationsNames)
+    {
+        let indexAnimation = model.animations.findIndex((animation) => animation.name === animationName);
+
+        if (indexAnimation !== -1) {
+            const action = mixerHumain.clipAction(model.animations[indexAnimation]);
+            action.play();
+            mixers.push(mixerHumain);
+            return;
+        }
+    }
+    console.warn(`Animation not found ${animationsNames} on ${model.name}`)
+
+
 }
