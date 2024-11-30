@@ -11,15 +11,33 @@
 <canvas id="scene"></canvas>
 <div id="button-wrapper">
   <div class="button">
-    <a class="play-button outline-button" id="play-button">Play</a>
+    <a class="play-button outline-button" id="play-button">Loading</a>
   </div>
 </div>
-<div id="score-wrapper">
-  <div class="button outline-button" style="display: flex; flex-direction: column; gap: 16px">
-    <a>Score</a>
-    <a id="score-value">0</a>
-  </div>
-</div>
+<!--<div id="score-wrapper">-->
+<!--  <div class="button outline-button" style="display: flex; flex-direction: column; gap: 16px">-->
+<!--    <a>Score</a>-->
+<!--    <a id="score-value">0</a>-->
+<!--  </div>-->
+<!--</div>-->
 <script type="module" src="/src/main.ts"></script>
+<script>
+  const playButton = document.getElementById("play-button");
+  if (playButton) {
+    let dotCount = 0;
+    const maxDots = 3;
+    const interval = 250;
+
+    const inter = setInterval(() => {
+      if (playButton.innerText.startsWith("Loading")) {
+        dotCount = (dotCount + 1) % (maxDots + 1);
+        playButton.innerText = "Loading" + ".".repeat(dotCount) + " "
+      }
+      else {
+        clearInterval(inter);
+      }
+    }, interval);
+  }
+</script>
 </body>
 </html>

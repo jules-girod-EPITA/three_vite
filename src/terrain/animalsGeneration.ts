@@ -1,15 +1,8 @@
-import {
-    AnimationMixer, Box3,
-    BoxGeometry,
-    BoxHelper,
-    Group,
-    Mesh,
-    MeshBasicMaterial,
-} from "three";
-import { loadGlb } from "../loader/model_loader";
-import { mixers } from "../main";
+import { Box3, BoxGeometry, BoxHelper, Group, Mesh, MeshBasicMaterial, Object3D, } from "three";
+import { loadFbx, loadGlb } from "../loader/model_loader";
 import { gsap } from "gsap";
 import { player } from "./initBoard";
+import { addAnimation } from "../misc";
 
 export async function initAnimals() {
 
@@ -51,29 +44,66 @@ export async function initAnimals() {
     object.add(sheep);
 
 
-    for (const model of [dog, cat, chicken, horse, pig, sheep]) {
-        let mixer = new AnimationMixer(model);
-        let indexAnimation = model.animations.findIndex((animation) => animation.name === "AnimalArmature|AnimalArmature|AnimalArmature|Walk");
-        if (indexAnimation === -1)
-            indexAnimation = model.animations.findIndex((animation) => animation.name === "AnimalArmature|AnimalArmature|AnimalArmature|Run");
 
-        if (indexAnimation !== -1) {
-            const action = mixer.clipAction(model.animations[indexAnimation]);
-            action.play();
-            mixers.push(mixer);
-        }
+
+    for (const model of [dog, cat, chicken, horse, pig, sheep]) {
+        addAnimation(model, "AnimalArmature|AnimalArmature|AnimalArmature|Walk", "AnimalArmature|AnimalArmature|AnimalArmature|Run");
+        // let mixer = new AnimationMixer(model);
+        // let indexAnimation = model.animations.findIndex((animation) => animation.name === "AnimalArmature|AnimalArmature|AnimalArmature|Walk");
+        // if (indexAnimation === -1)
+        //     indexAnimation = model.animations.findIndex((animation) => animation.name === "AnimalArmature|AnimalArmature|AnimalArmature|Run");
+        //
+        // if (indexAnimation !== -1) {
+        //     const action = mixer.clipAction(model.animations[indexAnimation]);
+        //     action.play();
+        //     mixers.push(mixer);
+        // }
     }
+    // object.position.x = -4;
+    object.position.z = 6;
+
     return [object, cube];
 }
 
 
+export async function petDog()
+{
+    const object = new Object3D();
+    const dog = await loadAnimalModelGlb("dog.glb");
+    dog.position.set(0.55, 0, 0.4);
+
+
+    const humain = await loadAnimalModelFbx("Petting_Animal.fbx");
+    humain.scale.set(0.003, 0.003, 0.003);
+    humain.position.set(0, 0, 0);
+    humain.lookAt(dog.position)
+    dog.lookAt(humain.position)
+
+
+    object.add(dog);
+    object.add(humain);
+
+    addAnimation(humain, "mixamo.com");
+    addAnimation(dog, "AnimalArmature|AnimalArmature|AnimalArmature|Headbutt")
+
+    return object;
+}
+
+export async function sheepEating() {
+    const sheep = await loadAnimalModelGlb("sheep.glb");
+    sheep.position.set(0.55, 0, 0.4);
+
+    addAnimation(sheep, "AnimalArmature|AnimalArmature|AnimalArmature|Idle_Eating")
+    return sheep;
+}
+
 export function translateAnimal(model: Group, translation: number, hitBox: Mesh) {
     gsap.to(model.position, {
-        duration: 15,
+        duration: 10,
         x: model.position.x + translation,
         ease: "none",
         onComplete: () => {
-            model.position.x = -16;
+            model.position.x = -8;
             translateAnimal(model, translation, hitBox);
         },
         onUpdate: () => {
@@ -93,6 +123,12 @@ async function loadAnimalModelGlb(filename: string) {
     return await loadGlb("assets/models/animals/", filename).then((animal) => {
         animal.scale.set(0.3, 0.3, 0.3)
         animal.rotation.set(0, Math.PI / 2, 0)
+        return animal;
+    })
+}
+
+async function loadAnimalModelFbx(filename: string) {
+    return await loadFbx("assets/models/animals/", filename).then((animal) => {
         return animal;
     })
 }

@@ -1,17 +1,16 @@
 import { CellType } from "./types";
-import { Euler, Object3D } from "three";
+import { AnimationMixer, Euler, Object3D } from "three";
 import { gsap } from "gsap";
-import { deathText } from "./main";
+import { deathText, mixers } from "./main";
 import { board } from "./terrain/initBoard";
 import { vibrate } from "./controller/controller";
-import { board } from "./terrain/initBoard";
 
 
 export class Player extends Object3D {
-    public done: boolean = false;
     private readonly onUpdate: () => void;
     private death: boolean = false;
     private canRevive: boolean = false;
+    private _isControllable: boolean = false;
 
     constructor() {
         super();
@@ -172,6 +171,15 @@ export class Player extends Object3D {
         this.onUpdate();
     }
 
+    isControllable() {
+        return this._isControllable;
+    }
+
+    setControllable()
+    {
+        this._isControllable = true;
+    }
+
     private reset() {
         this.canRevive = false;
         this.death = false;
@@ -184,7 +192,9 @@ export class Player extends Object3D {
 
 
 type CellConfig = {
-    scale: number;
+    scaleX: number;
+    scaleY: number;
+    scaleZ: number;
     rotation?: Euler;
     randomRotation?: boolean;
     randomPosition?: boolean;
@@ -195,61 +205,106 @@ export function generateCellConfig() {
         [key in CellType]: CellConfig | null;
     } = {
         [CellType.ROAD]: {
-            scale: 0.25,
+            scaleX: 0.25,
+            scaleY: 0.25,
+            scaleZ: 0.25,
             rotation: new Euler(0, Math.PI / 2, 0),
             randomPosition: false,
         },
         [CellType.FLOWERS_1]: {
-            scale: 0.2,
+            scaleX: 0.2,
+            scaleY: 0.2,
+            scaleZ: 0.2,
             randomRotation: true,
             randomPosition: true,
         },
         [CellType.FLOWERS_2]: {
-            scale: 0.2,
+            scaleX: 0.2,
+            scaleY: 0.2,
+            scaleZ: 0.2,
             randomRotation: true,
             randomPosition: true,
         },
         [CellType.ROCK_1]: {
-            scale: 0.35,
+            scaleX: 0.35,
+            scaleY: 0.35,
+            scaleZ: 0.35,
             randomRotation: true,
             randomPosition: false,
         },
         [CellType.ROCK_2]: {
-            scale: 0.35,
+            scaleX: 0.35,
+            scaleY: 0.35,
+            scaleZ: 0.35,
             randomRotation: true,
             randomPosition: false,
         },
         [CellType.DEADTREE_1]: {
-            scale: 0.5,
+            scaleX: 0.4,
+            scaleY: 0.5,
+            scaleZ: 0.5,
             randomRotation: true,
             randomPosition: false,
         },
         [CellType.DEADTREE_2]: {
-            scale: 0.5,
+            scaleX: 0.5,
+            scaleY: 0.5,
+            scaleZ: 0.5,
             randomRotation: true,
             randomPosition: false,
         },
         [CellType.DEADTREE_3]: {
-            scale: 0.5,
+            scaleX: 0.3,
+            scaleY: 0.5,
+            scaleZ: 0.5,
             randomRotation: true,
             randomPosition: false,
         },
         [CellType.TREE_1]: {
-            scale: 0.5,
+            scaleX: 0.3,
+            scaleY: 0.5,
+            scaleZ: 0.4,
             randomRotation: true,
             randomPosition: false,
         },
         [CellType.TREE_2]: {
-            scale: 0.5,
+            scaleX: 0.3,
+            scaleY: 0.5,
+            scaleZ: 0.4,
             randomRotation: true,
             randomPosition: false,
         },
         [CellType.TREE_3]: {
-            scale: 0.5,
+            scaleX: 0.2,
+            scaleY: 0.5,
+            scaleZ: 0.4,
             randomRotation: true,
             randomPosition: false,
         },
         [CellType.Empty]: null,
     };
     return cellConfig;
+}
+
+
+export function addAnimation(model : Object3D, ...animationsNames: string[])
+{
+    let mixerHumain = new AnimationMixer(model);
+    for(const animationName of animationsNames)
+    {
+        let indexAnimation = model.animations.findIndex((animation) => animation.name === animationName);
+
+        if (indexAnimation !== -1) {
+            const action = mixerHumain.clipAction(model.animations[indexAnimation]);
+            setTimeout(() => {
+                action.play();
+            }, 2500 * Math.random());
+
+            mixers.push(mixerHumain);
+            return;
+        }
+    }
+    console.warn(`Animation not found ${animationsNames} on ${model.name}`)
+
+
 }

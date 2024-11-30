@@ -14,21 +14,29 @@ import {
 } from "three";
 
 
-import { homeDecors, initialPlayerPosition, initialPlayerRotation, map, mapWidth } from "../main";
-import { extractGeometriesAndMaterialsFromGlb, loadFbx, loadGlb } from "../loader/model_loader";
+import { initialPlayerPosition, initialPlayerRotation, map, mapLength, mapWidth, trees } from "../main";
+import {
+    extractGeometriesAndMaterialsFromGlb,
+    extractGeometryAndMaterialFromModel,
+    loadFbx
+} from "../loader/model_loader";
 import { generateCellConfig, Player } from "../misc";
 import { generateWorld, instancedMesh } from "./worldGeneration";
 import { CellType } from "../types";
 import { animateCarInstance } from "./road";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
-import { initAnimals, translateAnimal } from "./animalsGeneration";
+import { initAnimals, petDog, sheepEating } from "./animalsGeneration";
 
+
+export let animals = new Group();
+export let hitBox;
 export let board: Group = new Group();
-export let cube: Object3D = await loadFbx("assets/models/", "Steve.fbx");
 export let player: Player = new Player();
 
 export async function initBoard(): Promise<Group> {
+    let cube: Object3D = await loadFbx("assets/models/", "Steve.fbx");
+
     cube.visible = false;
     try {
         cube.scale.set(0.0035, 0.0035, 0.0035);
@@ -42,46 +50,6 @@ export async function initBoard(): Promise<Group> {
 
     // scene.add(mesh);
     board.add(player);
-
-    const meshesWithoutCollision = ["Street", "Tree_1002"];
-    try {
-        const crash_site = await loadGlb("assets/models/scene/", "crash_scene_2.glb");
-        crash_site.traverse((child) => {
-            if (child instanceof Mesh) {
-                // get collision box
-                // get if the mesh is a collision box
-
-                if (!meshesWithoutCollision.some((meshName) => { return child.name.includes(meshName) })) {
-                    child.userData.speed = 1;
-                    homeDecors.push(child as Object3D);
-                }
-            }
-        })
-
-        board.add(crash_site);
-    } catch (error) {
-        console.error("An error happened while loading model:", error);
-    }
-
-    try {
-        let hospital_site = await loadGlb("assets/models/scene/", "hospital_scene.glb");
-        hospital_site.traverse((child) => {
-            if (child instanceof Mesh) {
-
-                if (!meshesWithoutCollision.some((meshName) => { return child.name.includes(meshName) })) {
-                    child.userData.speed = 1;
-                    homeDecors.push(child as Object3D);
-                }
-            }
-        })
-
-        hospital_site.position.set(4, 0, 103 * 2);
-        hospital_site.rotateY(Math.PI)
-
-        board.add(hospital_site);
-    } catch (error) {
-        console.error("An error happened while loading model:", error);
-    }
 
     let countRoads = [0];
     let countTrees = [0, 0, 0];
@@ -121,6 +89,7 @@ export async function initBoard(): Promise<Group> {
         for (let i = 0; i < carSpawnPoint.length; i++) {
             const cube = new Mesh(new BoxGeometry(1, 1, 1), new MeshStandardMaterial({ color: 'red' }));
             cube.position.set(carSpawnPoint[i].x, carSpawnPoint[i].y, carSpawnPoint[i].z);
+            cube.visible = false;
             board.add(cube);
         }
 
@@ -170,6 +139,10 @@ export async function initBoard(): Promise<Group> {
             instancedMesh.position.set(0, 0.1, 0);
             board.add(instancedMesh);
         });
+
+
+        /// === outline trees === ///
+        await initBorderTrees(cellConfig);
     }
 
     // === 📦 FBX OBJECT ===
@@ -231,12 +204,50 @@ export async function initBoard(): Promise<Group> {
     }
     board.position.set(0, 0, 0);
 
-    const [animal, hitBox] = await initAnimals();
-    animal.position.x = -4;
-    animal.position.z = 6;
+    const [animal, hitBox2] = await initAnimals();
 
-    translateAnimal(animal, 32, hitBox);
+    animals = animal;
+    hitBox = hitBox2;
     board.add(animal)
+
+    const alreadyEatingSheep: Vector3[] = [];
+
+    function generateToRandomCoordNotAlreadyUsed() {
+        let randomX = -99;
+        let randomZ = -99;
+        let count = 0;
+        while (count < 25 && (randomX === -99 || randomZ === -99 || randomX === 0 || randomZ === animal.position.z || alreadyEatingSheep.find((value) => value.x === randomX && value.z === randomZ))) {
+            randomX = Math.floor(Math.random() * 10) * 2 - 8;
+            randomZ = Math.floor(Math.random() * 5) * 2;
+            count++;
+        }
+        if (count === 25) {
+            randomX = 2;
+            randomZ = 2;
+            console.error(`Could not find a random coord in ${count} tries`);
+        }
+        alreadyEatingSheep.push(new Vector3(randomX, 0, randomZ));
+        return { randomX, randomZ };
+    }
+
+    for (let i = 0; i < 2; i++) {
+        const pettingAnimal = await petDog();
+        const { randomX, randomZ } = generateToRandomCoordNotAlreadyUsed();
+
+        pettingAnimal.position.set(randomX, 0, randomZ);
+        board.add(pettingAnimal);
+    }
+
+
+    for (let i = 0; i < 15; i++) {
+        const sheep = await sheepEating();
+        const { randomX, randomZ } = generateToRandomCoordNotAlreadyUsed();
+        sheep.position.set(randomX, 0, randomZ);
+        sheep.rotation.y = Math.random() * Math.PI * 2;
+        board.add(sheep);
+    }
+
+
     return board;
 
 }
@@ -258,4 +269,39 @@ async function addHighScoreText(board: Group, text: string, x: number, y: number
     textMesh.rotation.x = Math.PI / 2;
     textMesh.rotation.y = Math.PI;
     board.add(textMesh);
+}
+
+async function initBorderTrees(cellConfig : ReturnType<typeof generateCellConfig>)
+{
+    const { geometry, material } = extractGeometryAndMaterialFromModel(
+        await loadFbx("assets/models/props/", "Tree_1.fbx")
+    );
+    const instancedMeshTree = new InstancedMesh(geometry, material, mapWidth * 2 +2);
+    const scaleX = cellConfig[CellType.TREE_1]?.scaleX || 1;
+    const scaleY = cellConfig[CellType.TREE_1]?.scaleY || 1
+    const scaleZ = cellConfig[CellType.TREE_1]?.scaleZ || 1;
+
+
+    // let do the outline left and right
+    const dummy = new Object3D();
+
+    for (let j = 0; j <= mapWidth*2; j+=2) {
+        instancedMeshTree.setMatrixAt(j, new Matrix4().compose(new Vector3(j - mapWidth, 0,-2), new Quaternion(), new Vector3(scaleX, scaleY, scaleZ)));
+        instancedMeshTree.getMatrixAt(j, dummy.matrix);
+        const tempMesh = new Mesh(geometry);
+        tempMesh.applyMatrix4(dummy.matrix);
+        tempMesh.position.x -= mapWidth;
+        trees.push(tempMesh as Object3D);
+
+
+        instancedMeshTree.setMatrixAt(j+1, new Matrix4().compose(new Vector3(j - mapWidth, 0, mapLength*2), new Quaternion(), new Vector3(scaleX, scaleY, scaleZ)));
+        instancedMeshTree.getMatrixAt(j+1, dummy.matrix);
+        const tempMesh2 = new Mesh(geometry);
+        tempMesh2.applyMatrix4(dummy.matrix);
+        tempMesh2.position.x -= mapWidth;
+        trees.push(tempMesh2 as Object3D);
+    }
+
+    instancedMeshTree.position.set(0, 0.1, 0);
+    board.add(instancedMeshTree);
 }
