@@ -1,4 +1,5 @@
 import {
+    AudioLoader,
     BoxGeometry,
     Euler,
     Group,
@@ -9,12 +10,13 @@ import {
     MeshStandardMaterial,
     Object3D,
     PlaneGeometry,
+    PositionalAudio,
     Quaternion,
     Vector3
 } from "three";
 
 
-import { initialPlayerPosition, initialPlayerRotation, map, mapLength, mapWidth, trees } from "../main";
+import { initialPlayerPosition, initialPlayerRotation, listener, map, mapLength, mapWidth, trees } from "../main";
 import {
     extractGeometriesAndMaterialsFromGlb,
     extractGeometryAndMaterialFromModel,
@@ -33,9 +35,23 @@ export let animals = new Group();
 export let hitBox;
 export let board: Group = new Group();
 export let player: Player = new Player();
+export let deadSoundSource: PositionalAudio;
 
 export async function initBoard(): Promise<Group> {
     let cube: Object3D = await loadFbx("assets/models/", "Steve.fbx");
+    deadSoundSource = new PositionalAudio(listener);
+    deadSoundSource.position.set(player.position.x, player.position.y, player.position.z);
+    const audioLoader = new AudioLoader();
+    audioLoader.load("assets/sounds/death.mp3", (buffer) => {
+        deadSoundSource.setBuffer(buffer);
+        deadSoundSource.setRefDistance(1);
+        deadSoundSource.setMaxDistance(2);
+        deadSoundSource.setVolume(4);
+        deadSoundSource.setLoop(false);
+        deadSoundSource.stop();
+    });
+    player.add(deadSoundSource);
+
 
     cube.visible = false;
     try {

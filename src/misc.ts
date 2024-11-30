@@ -2,7 +2,7 @@ import { CellType } from "./types";
 import { AnimationMixer, Euler, Object3D } from "three";
 import { gsap } from "gsap";
 import { deathText, mixers } from "./main";
-import { board } from "./terrain/initBoard";
+import {board, deadSoundSource} from "./terrain/initBoard";
 import { vibrate } from "./controller/controller";
 
 
@@ -146,6 +146,7 @@ export class Player extends Object3D {
 
     setDeath() {
         if (!this.death) {
+            deadSoundSource.play();
             vibrate(1000);
             this.death = true;
             this.canRevive = false;
