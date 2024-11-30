@@ -1,5 +1,8 @@
+Les modifications du README pour ce deuxième rendu sont affichées **en gras**.
+
 # Description du Projet
-Vous êtes un médecin qui doit se rendre à l'hopital pour sauver des vies mais pas de chance votre ambulance s'est crashée parce que le conducteur n'a vu que trop tard que le route était en travaux.
+
+Vous êtes un médecin qui doit se rendre à l'hopital pour sauver des vies mais pas de chance votre ambulance s'est crashée parce que le conducteur n'a vu que trop tard que la route était en travaux.
 Pour cela, vous devez traverser des routes très fréquentées. Faites attention aux voitures, aux arbres et surtout aux pierres !! 
 
 **Atteignez l'hopital pour gagner.**
@@ -35,10 +38,24 @@ Pour utiliser ce projet, suivez les étapes ci-dessous, testé avec node 20.11.1
     ```
    
 ### Jouer
-- Utilisez les flèches directionnelles pour vous déplacer.
-- Evitez les voitures et les arbres.
-- Atteigner l'hopital pour gagner (100 de score).
+- **Swipez pour déplacer le joueur.**
+- Evitez les voitures, les arbres, **et les animaux**.
+- Atteignez la fin de la carte pour gagner **(il n'y a plus de fin)**.
 - La génération de la carte se fait uniquement au chargement de la page web.
+
+
+### Ajouts depuis la dernière soumission
+- **Ajout du son de voiture**
+- **Ajout du son de klaxon des voitures quand on est sur leur trajectoire**
+- **Ajout d'animaux au debut, ils possèdent des animations**
+
+### Remarques
+- **Quand vous mourrez, vous devez attendre 3 secondes avant de pouvoir rejouer. Pour rejouer, il suffit de cliquer sur l'écran**
+- **Pour pouvoir faire tourner le jeu sur téléphone en AR, nous avons dû utiliser des InstancedMesh pour chaque modèle 3D différent. Ce qui a pour conséquence de rendre le code plus complexe et moins lisible.**
+- **Nous avons abandonné l'idée d'avoir une version compatible avec la version web et la version AR, car cela rendait le code trop complexe.**
+- **Pour une meilleure fluidité, nous instancions la carte directement au chargement de la page et pas uniquement quand l'utilisateur clique sur "Play" car sinon il y a une latence d'une dizaine de secondes. Par conséquence si on quitte le mode AR les éléments sont toujours calculés**
+- **Seul l'un de nous deux possède un téléphone compatible en AR et le téléphone étant ancien, on atteint difficilement les 20-30 FPS (on a meme du downgrade la version de chrome sinon l'application se lançait une fois sur 5).**
+- **Nous avons retiré les gros modèles 3D comme la zone de depart et zone de fin pour gagner des performances.**
 
 
 
@@ -48,12 +65,12 @@ Pour utiliser ce projet, suivez les étapes ci-dessous, testé avec node 20.11.1
 ![Exemple du projet en action](./crossy_example.gif)
 
 ## Lien pour Tester l'App en Live
-[Tester l'application en live]( jules-girod-epita.github.io/three_vite/ )
+[Tester l'application en live]( https://jules-girod-epita.github.io/three_vite/ )
 
 ## Nom des Membres du Groupe
 ### Répartition des Rôles
-- **kevin.tran**: Système de mouvement et de collision
-- **jules.girod**: Le reste, mais en accord avec kevin.tran étant donné que nous avions d'autres projets en parallèle.
+- **kevin.tran** : Système de mouvement et de collision
+- **jules.girod** : Le reste, mais en accord avec kevin.tran étant donné que nous avions d'autres projets en parallèle.
 
 ## Sources d'Inspiration
 - [Crossy Road](https://crossyroad.com/)
@@ -65,3 +82,4 @@ Pour utiliser ce projet, suivez les étapes ci-dessous, testé avec node 20.11.1
 - [Ville](https://sketchfab.com/3d-models/free-low-poly-simple-urban-city-3d-asset-pack-310c806355814c3794f5e3022b38db85)
 - [Route](https://poly.pizza/bundle/Post-Apocolypse-Pack-jg0We8Clu0)
 - [Template de projet Vite](https://github.com/fdoganis/three_vite)
+- **[Swipe avec Hammerjs](https://hammerjs.github.io/)**
