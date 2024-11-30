@@ -1,9 +1,12 @@
 import {
-    AmbientLight, AnimationMixer,
+    AmbientLight,
+    AnimationMixer,
     AudioListener,
-    Clock, Group,
+    Clock,
     HemisphereLight,
-    LoadingManager, Mesh, MeshBasicMaterial,
+    LoadingManager,
+    Mesh,
+    MeshBasicMaterial,
     Object3D,
     PerspectiveCamera,
     Scene,
@@ -19,7 +22,7 @@ import Stats from 'three/examples/jsm/libs/stats.module'
 import './style.css'
 import { initButtonBehavior } from "./components/buttonBehavior";
 import { CellType, EnumDirection } from "./types";
-import { animals, board, hitBox, initBoard } from "./terrain/initBoard";
+import { animals, board, hitBox, initBoard, player } from "./terrain/initBoard";
 
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { moveAr } from "./controller/controller";
@@ -61,7 +64,7 @@ export let mixers: AnimationMixer[] = [];
 export const sideLength = 1
 export let controller;
 
-initButtonBehavior();
+// initButtonBehavior();
 
 async function setupXR(xrMode) {
 
@@ -170,7 +173,7 @@ function init() {
      */
 
     const xrButton = ARButton.createButton(renderer, {});
-    xrButton.style.backgroundColor = 'skyblue';
+    xrButton.id = "XRButton";
 
 
     xrButton.addEventListener('click', () => {
@@ -264,11 +267,24 @@ function init() {
         board.rotation.set(0, Math.PI, 0);
         board.position.set(0, -0.7, 0);
         scene.add(board);
-        document.body.appendChild(xrButton);
+        player.setControllable();
         const playButton = document.getElementById("play-button");
         if(playButton)
         {
+            document.body.appendChild(xrButton);
+            xrButton.style.display = 'none';
             playButton.innerText = "Play";
+            playButton.addEventListener('click', () => {
+                // simulate click on xrButton
+                const xrButton = document.getElementById("XRButton");
+                if (xrButton) {
+                    console.log("Simulate click", playButton.innerText)
+                    xrButton.click();
+                }
+            });
+
+        } else {
+            alert("No play button found. Panic !");
         }
     });
 

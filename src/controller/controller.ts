@@ -11,6 +11,8 @@ export function initController() {
 
 
 export const moveAr = (direction: EnumDirection) => {
+    if(!player.isControllable())
+        return;
 
     const translation = new Vector3();
 

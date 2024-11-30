@@ -10,6 +10,7 @@ export class Player extends Object3D {
     private readonly onUpdate: () => void;
     private death: boolean = false;
     private canRevive: boolean = false;
+    private _isControllable: boolean = false;
 
     constructor() {
         super();
@@ -168,6 +169,15 @@ export class Player extends Object3D {
 
         super.updateMatrixWorld(force);
         this.onUpdate();
+    }
+
+    isControllable() {
+        return this._isControllable;
+    }
+
+    setControllable()
+    {
+        this._isControllable = true;
     }
 
     private reset() {
