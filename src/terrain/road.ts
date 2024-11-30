@@ -52,6 +52,7 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
                 dummyObject.updateMatrix();
                 // A verif si jamais ca marche pas
                 sound.position.copy(dummyObject.position)
+                soundPlayer.position.copy(player.position);
                 carMesh.setMatrixAt(index, dummyObject.matrix);
                 carMesh.instanceMatrix.needsUpdate = true;
 
@@ -127,6 +128,7 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
                 if (playerBox.intersectsBox(carBox) && dummyObject.userData.lastCollision + 1000 < new Date().getTime()) {
                     dummyObject.userData.lastCollision = new Date().getTime();
                     player.setDeath();
+                    soundPlayer.play();
                 }
             },
             onComplete: () => {
@@ -139,13 +141,26 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
     }
 
     let sound = new PositionalAudio(listener);
+    let soundPlayer = new PositionalAudio(listener);
 
     const audioLoader = new AudioLoader();
 
     const pathSoundCar = "assets/sounds/car.mp3";
     const pathSoundHorn = "assets/sounds/horn.mp3";
+    const pathSoundDeath = "assets/sounds/death.mp3";
 
     sound.position.set(spawnPoint.x, spawnPoint.y, spawnPoint.z);
+    soundPlayer.position.set(player.position.x, player.position.y, player.position.z);
+
+    audioLoader.load(pathSoundDeath, (buffer) => {
+        soundPlayer.setBuffer(buffer);
+        soundPlayer.setRefDistance(1);
+        soundPlayer.setMaxDistance(2);
+        soundPlayer.setVolume(4);
+        soundPlayer.setLoop(false);
+        soundPlayer.filePath = pathSoundDeath;
+        soundPlayer.stop();
+    });
 
     audioLoader.load(pathSoundCar, (buffer) => {
         sound.setBuffer(buffer);
@@ -158,6 +173,7 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
     });
 
     board.add(sound);
+    board.add(soundPlayer)
 
     return new Promise(async (resolve) => {
         setTimeout(() => {
