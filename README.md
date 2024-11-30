@@ -50,6 +50,8 @@ Pour utiliser ce projet, suivez les étapes ci-dessous, testé avec node 20.11.1
 - **Ajout d'animaux au debut, ils possèdent des animations**
 
 ### Remarques
+- **Le jeu est jouable en AR sur téléphone en vertical uniquement.**
+- **Nous n'avons pas eu le temps de faire la synchronisation des mouvements du joueur en AR, donc pour jouer, il faut rester statique et bouger uniquement la tete.**
 - **Quand vous mourrez, vous devez attendre 3 secondes avant de pouvoir rejouer. Pour rejouer, il suffit de cliquer sur l'écran**
 - **Pour pouvoir faire tourner le jeu sur téléphone en AR, nous avons dû utiliser des InstancedMesh pour chaque modèle 3D différent. Ce qui a pour conséquence de rendre le code plus complexe et moins lisible.**
 - **Nous avons abandonné l'idée d'avoir une version compatible avec la version web et la version AR, car cela rendait le code trop complexe.**
