@@ -51,13 +51,13 @@ Pour utiliser ce projet, suivez les étapes ci-dessous, testé avec node 20.11.1
 
 ### Remarques
 - **Le jeu est jouable en AR sur téléphone en vertical uniquement.**
-- **Nous n'avons pas eu le temps de faire la synchronisation des mouvements du joueur en AR, donc pour jouer, il faut rester statique et bouger uniquement la tete.**
+- **Nous n'avons pas eu le temps de faire la synchronisation des mouvements du joueur en AR, donc pour jouer, il faut rester statique et bouger uniquement la tête.**
 - **Quand vous mourrez, vous devez attendre 3 secondes avant de pouvoir rejouer. Pour rejouer, il suffit de cliquer sur l'écran**
-- **Pour pouvoir faire tourner le jeu sur téléphone en AR, nous avons dû utiliser des InstancedMesh pour chaque modèle 3D différent. Ce qui a pour conséquence de rendre le code plus complexe et moins lisible.**
+- **Pour pouvoir faire tourner le jeu sur téléphone en AR, nous avons dû utiliser des InstancedMesh pour chaque modèle 3D différents. Ce qui a pour conséquence de rendre le code plus complexe et moins lisible.**
 - **Nous avons abandonné l'idée d'avoir une version compatible avec la version web et la version AR, car cela rendait le code trop complexe.**
-- **Pour une meilleure fluidité, nous instancions la carte directement au chargement de la page et pas uniquement quand l'utilisateur clique sur "Play" car sinon il y a une latence d'une dizaine de secondes. Par conséquence si on quitte le mode AR les éléments sont toujours calculés**
-- **Seul l'un de nous deux possède un téléphone compatible en AR et le téléphone étant ancien, on atteint difficilement les 20-30 FPS (on a meme du downgrade la version de chrome sinon l'application se lançait une fois sur 5).**
-- **Nous avons retiré les gros modèles 3D comme la zone de depart et zone de fin pour gagner des performances.**
+- **Pour une meilleure fluidité, on instancie la carte directement au chargement de la page et pas uniquement quand l'utilisateur clique sur "Play" car sinon il y a une latence d'une dizaine de secondes. Par conséquence si on quitte le mode AR les éléments sont toujours calculés**
+- **Seul l'un de nous deux possède un téléphone compatible en AR et le téléphone étant ancien, on atteint difficilement les 20-30 FPS (on a même dû downgrade la version de chrome sinon l'application se lançait une fois sur 5).**
+- **Nous avons retiré les gros modèles 3D comme la zone de depart et zone de fin pour gagner en performance.**
 
 
 
