@@ -32,10 +32,11 @@ import { initAnimals, petDog, sheepEating } from "./animalsGeneration";
 export let animals = new Group();
 export let hitBox;
 export let board: Group = new Group();
-export let cube: Object3D = new Object3D();
 export let player: Player = new Player();
 
 export async function initBoard(): Promise<Group> {
+    let cube: Object3D = await loadFbx("assets/models/", "Steve.fbx");
+
     cube.visible = false;
     try {
         cube.scale.set(0.0035, 0.0035, 0.0035);

@@ -20,7 +20,6 @@ import { metaQuest3, XRDevice } from 'iwer';
 
 import Stats from 'three/examples/jsm/libs/stats.module'
 import './style.css'
-import { initButtonBehavior } from "./components/buttonBehavior";
 import { CellType, EnumDirection } from "./types";
 import { animals, board, hitBox, initBoard, player } from "./terrain/initBoard";
 
