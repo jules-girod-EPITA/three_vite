@@ -25,6 +25,7 @@ const cars: { model: string, speed: number, scale: number }[] = [
 
 export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnPoint: Vector3, carGeometry: BufferGeometry, carModelIndex: number) {
 
+    const left = spawnPoint.x > 0;
     const translation = new Vector3((spawnPoint.x < 0 ? 1 : -1) * (mapWidth - 1) * 2, 0, 0);
 
     function doAnimation() {
@@ -59,15 +60,49 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
                 player.getWorldPosition(playerWorldPosition);
                 dummyObject.getWorldPosition(carGeneratorWorldPosition);
 
+                if (Math.abs(playerWorldPosition.z - carGeneratorWorldPosition.z) > 1 && sound.filePath !== pathSoundCar)
+                {
+                    audioLoader.load(pathSoundCar, (buffer) => {
+                        sound.setBuffer(buffer);
+                        sound.setRefDistance(1);
+                        sound.setMaxDistance(2);
+                        sound.setVolume(1);
+                        sound.setLoop(true);
+                        sound.filePath = pathSoundCar;
+                        sound.stop();
+                    });
+                }
+
+                // Switch to horn sound
+                if (Math.abs(playerWorldPosition.z - carGeneratorWorldPosition.z) < 1 && sound.filePath !== pathSoundHorn)
+                {
+                    audioLoader.load(pathSoundHorn, (buffer) => {
+                        sound.setBuffer(buffer);
+                        sound.setRefDistance(1);
+                        sound.setMaxDistance(2);
+                        sound.setVolume(1);
+                        sound.setLoop(false);
+                        sound.filePath = pathSoundHorn;
+                        sound.stop();
+                    });
+                }
 
                 // check sound
                 if (playerWorldPosition.distanceTo(carGeneratorWorldPosition) > 20 || playerWorldPosition.z > carGeneratorWorldPosition.z) {
                     sound.setLoop(false);
                     sound.stop();
                     return;
-                } else if (sound.isPlaying === false) {
+                } else if (sound.isPlaying === false && sound.filePath === pathSoundCar) {
                     sound.setLoop(true);
                     sound.play()
+                }
+
+                // check horn
+                if (!player.isDead() && sound.filePath === pathSoundHorn && Math.abs(playerWorldPosition.z - carGeneratorWorldPosition.z) < 1 && ((left && carGeneratorWorldPosition.x > playerWorldPosition.x) || (!left && carGeneratorWorldPosition.x < playerWorldPosition.x))) {
+                    if (Math.abs(carGeneratorWorldPosition.x - playerWorldPosition.x) < 6)
+                        sound.play();
+                } else {
+                    // horn.stop();
                 }
 
                 if (playerWorldPosition.distanceTo(carGeneratorWorldPosition) > 10) {
@@ -105,6 +140,7 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
     let sound = new PositionalAudio(listener);
     const audioLoader = new AudioLoader();
     const pathSoundCar = "assets/sounds/car.mp3";
+    const pathSoundHorn = "assets/sounds/horn.mp3";
     sound.position.set(spawnPoint.x, spawnPoint.y, spawnPoint.z);
     audioLoader.load(pathSoundCar, (buffer) => {
         sound.setBuffer(buffer);
@@ -112,10 +148,10 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
         sound.setMaxDistance(2);
         sound.setVolume(1);
         sound.setLoop(true);
+        sound.filePath = pathSoundCar;
         sound.stop();
     });
 
-    sound.position.set(spawnPoint.x, spawnPoint.y, spawnPoint.z);
     board.add(sound);
 
     return new Promise(async (resolve) => {
