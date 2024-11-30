@@ -63,18 +63,18 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
                 dummyObject.getWorldPosition(carGeneratorWorldPosition);
 
                 // Switch to car sound
-                // if (Math.abs(playerWorldPosition.z - carGeneratorWorldPosition.z) > 1 && sound.filePath !== pathSoundCar)
-                // {
-                //     audioLoader.load(pathSoundCar, (buffer) => {
-                //         sound.setBuffer(buffer);
-                //         sound.setRefDistance(1);
-                //         sound.setMaxDistance(2);
-                //         sound.setVolume(1);
-                //         sound.setLoop(true);
-                //         sound.filePath = pathSoundCar;
-                //         sound.stop();
-                //     });
-                // }
+                if (Math.abs(playerWorldPosition.z - carGeneratorWorldPosition.z) > 1 && sound.filePath !== pathSoundCar)
+                {
+                    audioLoader.load(pathSoundCar, (buffer) => {
+                        sound.setBuffer(buffer);
+                        sound.setRefDistance(1);
+                        sound.setMaxDistance(2);
+                        sound.setVolume(1);
+                        sound.setLoop(true);
+                        sound.filePath = pathSoundCar;
+                        sound.stop();
+                    });
+                }
 
                 // Switch to horn sound
                 // if (Math.abs(playerWorldPosition.z - carGeneratorWorldPosition.z) < 1 && sound.filePath !== pathSoundHorn)
@@ -91,14 +91,14 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
                 // }
 
                 // check sound
-                // if (playerWorldPosition.distanceTo(carGeneratorWorldPosition) > 20 || playerWorldPosition.z > carGeneratorWorldPosition.z) {
-                //     sound.setLoop(false);
-                //     sound.stop();
-                //     return;
-                // } else if (sound.isPlaying === false && sound.filePath === pathSoundCar) {
-                //     sound.setLoop(true);
-                //     sound.play()
-                // }
+                if (playerWorldPosition.distanceTo(carGeneratorWorldPosition) > 20 || playerWorldPosition.z > carGeneratorWorldPosition.z) {
+                    sound.setLoop(false);
+                    sound.stop();
+                    return;
+                } else if (sound.isPlaying === false && sound.filePath === pathSoundCar) {
+                    sound.setLoop(true);
+                    sound.play()
+                }
 
                 // check horn
                 // if (!player.isDead() && sound.filePath === pathSoundHorn && Math.abs(playerWorldPosition.z - carGeneratorWorldPosition.z) < 1 && ((left && carGeneratorWorldPosition.x > playerWorldPosition.x) || (!left && carGeneratorWorldPosition.x < playerWorldPosition.x))) {
@@ -140,7 +140,7 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
         });
     }
 
-    // let sound = new PositionalAudio(listener);
+    let sound = new PositionalAudio(listener);
     let soundPlayer = new PositionalAudio(listener);
 
     const audioLoader = new AudioLoader();
@@ -162,17 +162,17 @@ export function animateCarInstance(carMesh: InstancedMesh, index: number, spawnP
         soundPlayer.stop();
     });
 
-    // audioLoader.load(pathSoundCar, (buffer) => {
-    //     sound.setBuffer(buffer);
-    //     sound.setRefDistance(1);
-    //     sound.setMaxDistance(2);
-    //     sound.setVolume(1);
-    //     sound.setLoop(true);
-    //     sound.filePath = pathSoundCar;
-    //     sound.stop();
-    // });
+    audioLoader.load(pathSoundCar, (buffer) => {
+        sound.setBuffer(buffer);
+        sound.setRefDistance(1);
+        sound.setMaxDistance(2);
+        sound.setVolume(1);
+        sound.setLoop(true);
+        sound.filePath = pathSoundCar;
+        sound.stop();
+    });
 
-    // board.add(sound);
+    board.add(sound);
     board.add(soundPlayer)
 
     return new Promise(async (resolve) => {
