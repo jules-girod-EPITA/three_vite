@@ -340,7 +340,10 @@ function onWindowResize() {
 
 
 
-await setupXR('immersive-ar');
-init();
+setupXR('immersive-ar').then(() =>
+{
+    init();
+})
+
 
 
