@@ -63,8 +63,8 @@ Pour utiliser ce projet, suivez les étapes ci-dessous, testé avec node 20.11.1
 
 
 ## Illustration
-### Vidéo / GIF / Screenshot
-![Exemple du projet en action](./crossy_example.gif)
+### Vidéo 
+Exemple du projet en action : ./example_ar.mp4
 
 ## Lien pour Tester l'App en Live
 [Tester l'application en live]( https://jules-girod-epita.github.io/three_vite/ )
